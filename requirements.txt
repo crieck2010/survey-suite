@@ -1,0 +1,10 @@
+# Engine dependencies (public GitHub repos)
+git+https://github.com/crieck2010/survey-cogo.git
+git+https://github.com/crieck2010/survey-levels.git
+git+https://github.com/crieck2010/survey-adjust.git
+git+https://github.com/crieck2010/survey-geodesy.git
+git+https://github.com/crieck2010/survey-raster.git
+git+https://github.com/crieck2010/survey-pointcloud.git
+git+https://github.com/crieck2010/survey-gnss.git
+# Build tooling (Windows packaging only)
+pyinstaller

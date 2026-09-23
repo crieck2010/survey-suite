@@ -1,0 +1,36 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "survey-suite"
+version = "0.1.0"
+description = "SurveySuite: meta-package and desktop application over the survey-suite engines"
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "MIT" }
+authors = [{ name = "crieck2010" }]
+keywords = ["surveying", "cogo", "gnss", "lidar", "desktop"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Topic :: Scientific/Engineering :: GIS",
+]
+dependencies = [
+    "survey-cogo @ git+https://github.com/crieck2010/survey-cogo.git",
+    "survey-levels @ git+https://github.com/crieck2010/survey-levels.git",
+    "survey-adjust @ git+https://github.com/crieck2010/survey-adjust.git",
+    "survey-geodesy @ git+https://github.com/crieck2010/survey-geodesy.git",
+    "survey-raster @ git+https://github.com/crieck2010/survey-raster.git",
+    "survey-pointcloud @ git+https://github.com/crieck2010/survey-pointcloud.git",
+    "survey-gnss @ git+https://github.com/crieck2010/survey-gnss.git",
+]
+
+[project.scripts]
+survey-suite = "suite.app:main"
+
+[project.urls]
+Repository = "https://github.com/crieck2010/survey-suite"
+
+[tool.setuptools.packages.find]
+where = ["src"]
