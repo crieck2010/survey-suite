@@ -1,5 +1,15 @@
 # survey-suite
 
+> **Project scope:** this repo is the **terrestrial surveying** half of the
+> geospatial suite — COGO, leveling, least-squares adjustment, geodesy,
+> GNSS, point clouds, and the desktop app. Remote-sensing work (satellite
+> imagery, change detection, site monitoring) has moved to its own project:
+> **[crieck2010/earthwatch-suite](https://github.com/crieck2010/earthwatch-suite)**.
+> The two projects stay compatible through the
+> [cross-suite contracts](https://github.com/crieck2010/earthwatch-suite/blob/main/docs/CONTRACTS.md)
+> (site-config schema, alert-event schema, GeoJSON interchange).
+> `survey-qgis` stays here as the shared cartography bridge.
+
 Meta-package and desktop application over the seven survey-suite
 computation engines. The engines do the math; this repo wires them
 together into documented workflows and a double-clickable Windows app.
