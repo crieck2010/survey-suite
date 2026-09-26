@@ -10,7 +10,7 @@
 > (site-config schema, alert-event schema, GeoJSON interchange).
 > `survey-qgis` stays here as the shared cartography bridge.
 
-Meta-package and desktop application over the nine survey-suite
+Meta-package and desktop application over the ten survey-suite
 computation engines. The engines do the math; this repo wires them
 together into documented workflows and a double-clickable Windows app.
 
@@ -27,6 +27,7 @@ together into documented workflows and a double-clickable Windows app.
 | `survey-gnss` | [crieck2010/survey-gnss](https://github.com/crieck2010/survey-gnss) | GNSS: NMEA parsing, WGS84, DOP, session statistics |
 | `survey-field` | [crieck2010/survey-field](https://github.com/crieck2010/survey-field) | Field import: Emlid Flow/ReachView CSV, job model, validation, handoffs to cogo/adjust |
 | `survey-adjust-workflow` | [crieck2010/survey-adjust-workflow](https://github.com/crieck2010/survey-adjust-workflow) | Adjustment workflow: user-weighted LS (RTK means, level nets, traverse), blunder detection, justification reports |
+| `survey-drafting` | [crieck2010/survey-drafting](https://github.com/crieck2010/survey-drafting) | Drafting and deliverables: adjusted coordinates to plat/plan/map PDFs, validity gate, hand-rolled PDF writer, metes-and-bounds |
 
 Each engine is pure Python, dependency-free, independently tested, and
 usable on its own. This repo adds:
@@ -42,7 +43,7 @@ usable on its own. This repo adds:
 pip install -e .
 ```
 
-This pulls the seven engines from their public GitHub repos. Requires
+This pulls the ten engines from their public GitHub repos. Requires
 Python ≥ 3.9. Launch the desktop app with:
 
 ```bash
