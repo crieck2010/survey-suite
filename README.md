@@ -10,7 +10,7 @@
 > (site-config schema, alert-event schema, GeoJSON interchange).
 > `survey-qgis` stays here as the shared cartography bridge.
 
-Meta-package and desktop application over the seven survey-suite
+Meta-package and desktop application over the eight survey-suite
 computation engines. The engines do the math; this repo wires them
 together into documented workflows and a double-clickable Windows app.
 
@@ -25,6 +25,7 @@ together into documented workflows and a double-clickable Windows app.
 | `survey-raster` | [crieck2010/survey-raster](https://github.com/crieck2010/survey-raster) | Rasters: indices (NDVI/EVI/...), stats, resampling, tiling |
 | `survey-pointcloud` | [crieck2010/survey-pointcloud](https://github.com/crieck2010/survey-pointcloud) | Point clouds: thinning, ground classification, DEMs, volumes |
 | `survey-gnss` | [crieck2010/survey-gnss](https://github.com/crieck2010/survey-gnss) | GNSS: NMEA parsing, WGS84, DOP, session statistics |
+| `survey-field` | [crieck2010/survey-field](https://github.com/crieck2010/survey-field) | Field import: Emlid Flow/ReachView CSV, job model, validation, handoffs to cogo/adjust |
 
 Each engine is pure Python, dependency-free, independently tested, and
 usable on its own. This repo adds:
