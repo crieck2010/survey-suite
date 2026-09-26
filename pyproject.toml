@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "survey-suite"
-version = "0.1.0"
+version = "0.2.0"
 description = "SurveySuite: meta-package and desktop application over the survey-suite engines"
 readme = "README.md"
 requires-python = ">=3.9"
@@ -17,13 +17,17 @@ classifiers = [
     "Topic :: Scientific/Engineering :: GIS",
 ]
 dependencies = [
-    "survey-cogo @ git+https://github.com/crieck2010/survey-cogo.git",
+    "survey-cogo @ git+https://github.com/crieck2010/survey-cogo@f59b04d8048d282cffe281723d53d521b720007d",
     "survey-levels @ git+https://github.com/crieck2010/survey-levels.git",
-    "survey-adjust @ git+https://github.com/crieck2010/survey-adjust.git",
+    "survey-adjust @ git+https://github.com/crieck2010/survey-adjust@bc144832aeddc77db9c73b7240c300f1774436a6",
     "survey-geodesy @ git+https://github.com/crieck2010/survey-geodesy.git",
     "survey-raster @ git+https://github.com/crieck2010/survey-raster.git",
     "survey-pointcloud @ git+https://github.com/crieck2010/survey-pointcloud.git",
     "survey-gnss @ git+https://github.com/crieck2010/survey-gnss.git",
+    "survey-field @ git+https://github.com/crieck2010/survey-field@v0.1.0",
+    "survey-adjust-workflow @ git+https://github.com/crieck2010/survey-adjust-workflow@v0.1.1",
+    "survey-drafting @ git+https://github.com/crieck2010/survey-drafting@v0.1.2",
+    "survey-basemap @ git+https://github.com/crieck2010/survey-basemap@v0.1.0",
 ]
 
 [project.scripts]

@@ -1,10 +1,11 @@
 """survey-suite: meta-package and desktop app over the survey engines.
 
+Field-to-finish desktop product over the survey engines.
+
 Thin integration layer only -- all surveying math lives in the engine
-packages (survey-cogo, survey-levels, survey-adjust, survey-geodesy,
-survey-raster, survey-pointcloud, survey-gnss).
+packages. See README.md for the product tour.
 """
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"
 
 __all__ = ["__version__"]

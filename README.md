@@ -1,200 +1,126 @@
-# survey-suite
+# SurveySuite — field-to-finish land surveying software
 
 > **Project scope:** this repo is the **terrestrial surveying** half of the
-> geospatial suite — COGO, leveling, least-squares adjustment, geodesy,
-> GNSS, point clouds, and the desktop app. Remote-sensing work (satellite
-> imagery, change detection, site monitoring) has moved to its own project:
+> geospatial suite — field import, least-squares adjustment, drafting,
+> drone basemaps, and the desktop app. Remote-sensing work (satellite
+> imagery, change detection, site monitoring) lives in its own project:
 > **[crieck2010/earthwatch-suite](https://github.com/crieck2010/earthwatch-suite)**.
-> The two projects stay compatible through the
-> [cross-suite contracts](https://github.com/crieck2010/earthwatch-suite/blob/main/docs/CONTRACTS.md)
-> (site-config schema, alert-event schema, GeoJSON interchange).
-> `survey-qgis` stays here as the shared cartography bridge.
 
-Meta-package and desktop application over the eleven survey-suite
-computation engines. The engines do the math; this repo wires them
-together into documented workflows and a double-clickable Windows app.
+SurveySuite is a standalone desktop application that takes you from the
+field to a finished plat: import Emlid RTK CSVs, run a user-weighted
+least-squares adjustment with a written justification, draft plats/plans/maps
+to PDF over a toggleable drone-orthomosaic basemap — all offline, on your
+own machine.
+
+**v0.2.0 "field-to-finish"** is the first product release: the five-build
+program (field import → adjustment workflow → drafting/deliverables →
+drone basemap → desktop app) wired into one GUI.
+
+## The 5-minute field-to-finish tour
+
+1. **Project tab** — New project, name it, set the CRS (e.g.
+   `NAD83(2011) / UTM zone 18N`), fill in your surveyor profile once.
+2. **Import tab** — pick your Emlid Flow CSVs → Run import. Errors and
+   warnings are shown separately; the job saves as `.sfield.json`.
+3. **Adjust tab** — the weights editor shows your stochastic model
+   (RTK RMS × scale, mm/√km for levels, arcseconds, mm + ppm). Tune it,
+   Validate, then Run adjustment. A green **VALID** banner plus the
+   written justification report tells you *why* the adjustment is valid.
+   Red **NOT VALID**? Read the report — it names the failed criterion.
+4. **Map tab** — zoom/pan your points (colored by FIX/FLOAT/SINGLE),
+   toggle the drone basemap on/off, slide the opacity.
+5. **Basemap tab** — load your DJI Terra / ODM GeoTIFF, check the
+   GSD-vs-scale verdict, build overviews once, attach to the project.
+6. **Draft tab** — order your boundary points, pick sheet + scale,
+   Compose PDF. The plat carries the title block with seal/signature
+   block, line/curve tables, and your adjustment report as an appendix.
+   If the adjustment isn't VALID, there is no plat — no override, on purpose.
+
+## Install (from source)
+
+```bash
+pip install -r requirements.txt   # eleven engines, from public GitHub repos
+pip install -e .
+survey-suite                      # launch the desktop app
+```
+
+Requires Python ≥ 3.9 (3.11/3.12 recommended). Pure Python + tkinter —
+no compiled dependencies, works fully offline after install.
+
+## Build the Windows .exe (on your ASUS)
+
+PyInstaller builds for the OS it runs on, so the distributable `.exe`
+must be produced on a Windows PC. On the ASUS:
+
+1. Install **Python 3.11 or 3.12** from python.org (check "Add python.exe
+   to PATH").
+2. Double-click **`build_exe.bat`** — installs everything, builds
+   `dist\SurveySuite\SurveySuite.exe`.
+3. (Optional installer) Open **`installer.iss`** in Inno Setup and hit
+   Compile → `SurveySuite-0.2.0-setup.exe`.
+
+That's it — three steps, no command line needed after step 1.
 
 ## The engines
 
-| Package | Repo | What it does |
-|---|---|---|
-| `survey-cogo` | [crieck2010/survey-cogo](https://github.com/crieck2010/survey-cogo) | COGO: inverses, forwards, intersections, traverses, areas |
-| `survey-levels` | [crieck2010/survey-levels](https://github.com/crieck2010/survey-levels) | Differential leveling: HI reduction, page checks, misclosure |
-| `survey-adjust` | [crieck2010/survey-adjust](https://github.com/crieck2010/survey-adjust) | Least-squares: level nets, angle adjustment, chi-square testing |
-| `survey-geodesy` | [crieck2010/survey-geodesy](https://github.com/crieck2010/survey-geodesy) | Ellipsoids, ECEF, Helmert, Transverse Mercator, UTM, Vincenty |
-| `survey-raster` | [crieck2010/survey-raster](https://github.com/crieck2010/survey-raster) | Rasters: indices (NDVI/EVI/...), stats, resampling, tiling |
-| `survey-pointcloud` | [crieck2010/survey-pointcloud](https://github.com/crieck2010/survey-pointcloud) | Point clouds: thinning, ground classification, DEMs, volumes |
-| `survey-gnss` | [crieck2010/survey-gnss](https://github.com/crieck2010/survey-gnss) | GNSS: NMEA parsing, WGS84, DOP, session statistics |
-| `survey-field` | [crieck2010/survey-field](https://github.com/crieck2010/survey-field) | Field import: Emlid Flow/ReachView CSV, job model, validation, handoffs to cogo/adjust |
-| `survey-adjust-workflow` | [crieck2010/survey-adjust-workflow](https://github.com/crieck2010/survey-adjust-workflow) | Adjustment workflow: user-weighted LS (RTK means, level nets, traverse), blunder detection, justification reports |
-| `survey-drafting` | [crieck2010/survey-drafting](https://github.com/crieck2010/survey-drafting) | Drafting and deliverables: adjusted coordinates to plat/plan/map PDFs, validity gate, hand-rolled PDF writer, metes-and-bounds |
-| `survey-basemap` | [crieck2010/survey-basemap](https://github.com/crieck2010/survey-basemap) | Drone basemap: hand-rolled GeoTIFF reader (stdlib only), windowed reads, overview pyramids, CRS mismatch gate, drafting RasterSource adapter |
+| Package | What it does |
+|---|---|
+| `survey-cogo` | COGO: inverses, forwards, intersections, traverses, areas |
+| `survey-levels` | Differential leveling: HI reduction, page checks, misclosure |
+| `survey-adjust` | Least-squares: level nets, angle adjustment, chi-square testing |
+| `survey-geodesy` | Ellipsoids, ECEF, Helmert, Transverse Mercator, UTM, Vincenty |
+| `survey-raster` | Rasters: indices (NDVI/EVI/...), stats, resampling, tiling |
+| `survey-pointcloud` | Point clouds: thinning, ground classification, DEMs, volumes |
+| `survey-gnss` | GNSS: NMEA parsing, WGS84, DOP, session statistics |
+| `survey-field` | Field import: Emlid Flow/ReachView CSV → canonical job, validation |
+| `survey-adjust-workflow` | Adjustment: user-weighted LS (RTK means, level nets, traverse), Baarda snooping, justification reports |
+| `survey-drafting` | Drafting: plats/plans/maps to PDF, validity gate, metes-and-bounds |
+| `survey-basemap` | Drone basemap: GeoTIFF reader, overviews, CRS gate, drafting adapter |
 
 Each engine is pure Python, dependency-free, independently tested, and
-usable on its own. This repo adds:
+usable on its own. This repo adds the product layer:
 
-- **`suite.workflows`** — cross-engine integration workflows (below)
-- **`suite.app`** — tkinter desktop app, one tab per engine
-- **`suite.licensing` / `suite.updates`** — monetization hooks, stubbed
+- **`suite.project`** — the `.sproj` project manifest (portable, relative paths)
+- **`suite.runners`** — field-to-finish orchestration, Tk-free and tested
+- **`suite.app`** — the tkinter desktop app (thin UI over the runners)
+- **`suite.workflows`** — cross-engine integration workflows
+- **`suite.licensing` / `suite.updates`** — monetization hooks (stubbed, fail-open)
 - **`build.py`, `build_exe.bat`, `installer.iss`** — Windows packaging
 
-## Installation
+## FAQ
 
-```bash
-pip install -e .
-```
+**Where does the .exe come from?**
+From *your* machine. `build_exe.bat` runs PyInstaller locally and bundles
+the Python interpreter plus all eleven engines into one file. Nothing is
+downloaded at runtime; the app works fully offline.
 
-This pulls the eleven engines from their public GitHub repos. Requires
-Python ≥ 3.9. Launch the desktop app with:
+**Do I need internet?**
+Only for the initial `pip install` (engines come from GitHub). After that,
+field → plat runs offline.
 
-```bash
-survey-suite
-# or
-python -m suite.app
-```
+**Why won't it draft my plat?**
+The validity gate: drafting requires a VALID adjustment verdict. Open the
+justification report on the Adjust tab — it names the failed criterion
+(datum, redundancy, stochastic model, or unresolved blunders). Fix the
+cause, re-run, then draft. There is deliberately no override.
 
-## Integration workflows
+**Can I use it for licensed plats?**
+The plat title block carries a seal/signature block from day one. In NY
+(and most states) a plat needs a licensed PLS seal to be recorded — the
+software prepares everything up to the seal; the license is yours to earn.
 
-`suite.workflows` composes engines into tasks crews actually perform.
-Thin orchestration only — no duplicated math.
+**Is my data sent anywhere?**
+No. Everything runs locally. The update check fetches one tiny version
+file and never sends anything.
 
-```python
-from suite.workflows import (
-    dem_volume_workflow,          # pointcloud -> raster -> volumes
-    level_to_adjustment_workflow, # levels -> least-squares
-    gnss_cogo_control_workflow,   # gnss -> geodesy -> cogo
-)
+**Does it process raw GNSS baselines?**
+No — Emlid Flow/Studio does your baseline processing; SurveySuite imports
+the processed solutions. Raw carrier-phase processing is out of scope.
 
-# 1. Stockpile volume: classify ground, grid a DTM raster, cut/fill.
-r = dem_volume_workflow(points, 0, 0, 1.0, 200, 200, base_elevation=100.0)
-print(r["cut"], r["fill"], r["net"])   # r["dtm"] is a survey-raster Raster
+## Docs
 
-# 2. Level loop: reduce notes, page-check, then rigorously adjust.
-r = level_to_adjustment_workflow("BM-A", 100.0, setups)
-print(r["page_check"].ok, r["adjustment"].points)
-
-# 3. NMEA log: session mean -> UTM -> COGO control point.
-r = gnss_cogo_control_workflow(open("rover.log"), "CTRL-1")
-print(r["control_point"], f"{r['accuracy_m']:.3f} m @95%")
-```
-
-## Desktop app
-
-Seven tabs, one per engine; each tab is a form over engine functions:
-
-- **COGO** — inverse (azimuth/distance) and forward computation
-- **Levels** — paste setup lines, get HI reduction + page check
-- **Adjust** — closed-horizon angle adjustment
-- **Geodesy** — lat/lon to UTM
-- **Raster** — NDVI from red/NIR grids
-- **Point Cloud** — paste XYZ, get ground classification + DTM + volume
-  (runs `dem_volume_workflow`)
-- **GNSS** — paste an NMEA log, get session mean + UTM control point
-  (runs `gnss_cogo_control_workflow`)
-
-The UI is deliberately thin: adding a feature means adding an engine
-function, then a tab that calls it.
-
-## Building the Windows .exe
-
-PyInstaller targets the OS it runs on, so the distributable `.exe` must
-be built on a Windows PC:
-
-```bat
-build_exe.bat
-```
-
-This installs dependencies and produces
-`dist\SurveySuite\SurveySuite.exe`. Then compile `installer.iss` with
-[Inno Setup](https://jrsoftware.org/isinfo.php) for a real installer
-with Start Menu and desktop shortcuts.
-
-## Monetization hooks (stubbed)
-
-- **Licensing** (`suite/licensing.py`): `check_license()` looks for a key
-  in `SURVEY_SUITE_LICENSE` or `~/.survey-suite/license.key`. Enforcement
-  is **off** (`REQUIRE_LICENSE = False`); the stub accepts any key as a
-  beta license. Swap in real verification (signed key, or Gumroad / Lemon
-  Squeezy license API) before selling.
-- **Updates** (`suite/updates.py`): `check_for_updates()` fetches a
-  version file with a 3 s timeout. Point `UPDATE_URL` at the real feed at
-  release time. Both hooks never raise and never block the UI.
-
-Payments go through a merchant of record (Gumroad / Lemon Squeezy) —
-never custom billing code.
-
-## Interoperability
-
-The suite's interop contracts, enforced by the workflows and their tests:
-
-- **NMEA in, control out.** Receiver logs from any hardware parse through
-  `survey-gnss` and land as a `survey-cogo` control point via UTM —
-  the field-to-office path in one call.
-- **Points to rasters.** `survey-pointcloud` DEM grids are already the
-  row-major structure `survey-raster` wraps; `dem_volume_workflow`
-  returns a first-class `Raster` for hillshading, contours, or export.
-- **Notes to adjustment.** `survey-levels` reductions become weighted
-  `survey-adjust` observations with the benchmark as held datum — the
-  page check guards the adjustment's input.
-- **Shared vocabularies.** ASPRS classification codes, GGA fix-quality
-  flags, GDAL-style geotransforms, and WGS84 throughout mean data
-  round-trips with laspy/PDAL/GDAL-style tooling at the boundaries.
-
-## Scaling
-
-- **Stream at the edges.** NMEA logs and point clouds stream through
-  generators and O(1)-memory accumulators; the app tabs that paste data
-  are demos — production jobs point the same workflows at files.
-- **Rasterize early.** The point-cloud workflow grids once, then every
-  downstream step (volumes, indices) runs on the grid, which is orders
-  of magnitude smaller than the source cloud.
-- **Engines stay dependency-free and import-light** so the PyInstaller
-  bundle stays small and cold startup stays fast; heavy future
-  dependencies (numpy, laspy, rasterio) belong in optional engine
-  upgrades, not in the suite core.
-- **Desktop now, services later.** The workflows are UI-agnostic pure
-  functions — the same code serves a future web API or batch runner
-  without modification.
-
-## Testing
-
-```bash
-python -m unittest discover -s tests
-```
-
-10 tests covering the three cross-engine workflows (hand-computed
-volumes, a closed level loop, a synthetic NMEA log), the licensing and
-update stubs (never raise, degrade gracefully), and side-effect-free app
-import. All pass. Engine test suites live in their own repos.
-
-## Project structure
-
-```
-survey-suite/
-├── src/suite/
-│   ├── __init__.py      # version
-│   ├── workflows.py     # cross-engine integration workflows
-│   ├── app.py           # tkinter desktop app (thin UI, 7 tabs)
-│   ├── licensing.py     # license-key hook (stubbed, non-blocking)
-│   └── updates.py       # update-check hook (stubbed, never raises)
-├── tests/test_suite.py
-├── pyproject.toml       # engines as git+https dependencies
-├── requirements.txt
-├── build.py             # one-command PyInstaller build
-├── build_exe.bat        # Windows one-command build wrapper
-├── installer.iss        # Inno Setup installer script
-├── CHANGELOG.md
-└── LICENSE
-```
-
-## Roadmap
-
-- Engine upgrades: numpy-backed raster/pointcloud paths, RINEX support,
-  weighted DOP, progressive morphological ground filters
-- App: file dialogs + project save/load, map preview, batch processing
-- Distribution: signed installer, auto-updater wired to `suite.updates`,
-  license enforcement via merchant-of-record
-
-## License
-
-MIT — see [LICENSE](LICENSE).
+- [`docs/USER_GUIDE.md`](docs/USER_GUIDE.md) — every tab, and the weights
+  editor explained (doubles as FS-exam study material)
+- [`docs/INTEROP.md`](docs/INTEROP.md) — the contracts between this repo
+  and the engine repos
+- [`CHANGELOG.md`](CHANGELOG.md) — version history

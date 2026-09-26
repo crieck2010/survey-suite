@@ -2,7 +2,7 @@
 ; Build the exe first with build_exe.bat, then compile this with Inno Setup.
 
 #define AppName "SurveySuite"
-#define AppVersion "0.1.0"
+#define AppVersion "0.2.0"
 #define AppPublisher "crieck2010"
 
 [Setup]
