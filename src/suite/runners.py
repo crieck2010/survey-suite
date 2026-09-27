@@ -29,15 +29,28 @@ class ImportResult:
     n_errors: int
     n_warnings: int
     ok: bool                          # no errors
+    reproject: Optional[Dict[str, Any]] = None  # set when target_crs given:
+    # {"applied", "n_points", "source_name", "target_name", "source_epsg",
+    #  "target_epsg", "notes", "warnings"} -- warnings carry the
+    # survey-crs datum-shift warnings for the import report view.
 
 
 def run_import(csv_paths: List[str], job_path: str,
                project_name: str = "",
-               thresholds: Optional[Dict[str, float]] = None) -> ImportResult:
+               thresholds: Optional[Dict[str, float]] = None,
+               target_crs: Optional[str] = None) -> ImportResult:
     """Parse Emlid CSVs -> validate -> write .sfield.json job file.
 
     Multiple CSVs are merged into one project (points concatenated, base
     stations de-duplicated by position inside survey-field).
+
+    When ``target_crs`` is given (an EPSG code or registry name, e.g.
+    ``"EPSG:6539"``), geographic-CS exports are reprojected into the
+    target on import via ``field.reproject`` (survey-field v0.2.0+,
+    survey-crs backend); the job file keeps the ``crs_provenance`` block
+    and the returned ``reproject`` dict surfaces the datum-shift
+    warnings. Projected-in-a-different-CRS input is refused loudly --
+    never silently mixed.
     """
     from field import emlid as emlid_mod
     from field.adapters import job_summary
@@ -67,6 +80,40 @@ def run_import(csv_paths: List[str], job_path: str,
         baseline_warn_m=thresholds.get("baseline_km", 10.0) * 1000.0,
     )
     write_job(project, job_path)
+    reproject = None
+    if target_crs:
+        try:
+            from field.reproject import reproject_project
+        except ImportError as exc:
+            raise ValueError(
+                "reproject-on-import needs survey-field 0.2.0 or newer "
+                "(field.reproject); the installed survey-field is older. "
+                "Upgrade the engine or turn the toggle off.") from exc
+        try:
+            report = reproject_project(project, target_crs)
+        except Exception:
+            # Never leave a half-reprojected job file behind: the GUI
+            # surfaces the (already actionable) error via on_error.
+            try:
+                os.unlink(job_path)
+            except OSError:
+                pass
+            raise
+        # Persist the reprojected coordinates + crs_provenance block.
+        write_job(project, job_path)
+        prov = report.provenance or {}
+        src = prov.get("source_crs", {})
+        tgt = prov.get("target_crs", {})
+        reproject = {
+            "applied": report.applied,
+            "n_points": report.n_points,
+            "source_name": report.source_name,
+            "target_name": report.target_name,
+            "source_epsg": src.get("epsg"),
+            "target_epsg": tgt.get("epsg"),
+            "notes": list(report.notes),
+            "warnings": list(report.warnings),
+        }
     summary = job_summary(project)
     summary["dialects"] = dialects
     issue_dicts = [dict(severity=i.severity, code=i.code,
@@ -77,7 +124,8 @@ def run_import(csv_paths: List[str], job_path: str,
     return ImportResult(job_path=job_path, summary=summary,
                         issues=issue_dicts, n_errors=n_errors,
                         n_warnings=n_warnings,
-                        ok=not has_errors(issues))
+                        ok=not has_errors(issues),
+                        reproject=reproject)
 
 
 def inspect_job(job_path: str) -> Dict[str, Any]:

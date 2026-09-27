@@ -1,8 +1,12 @@
-"""SurveySuite desktop application (v0.2.0).
+"""SurveySuite desktop application (v0.3.0).
 
 Thin tkinter UI over the survey-suite product engines. Every button calls
 :mod:`suite.runners` -- the GUI never calls the engines directly and
 contains no surveying math.
+
+The notebook tabs are toolboxes from :mod:`suite.toolboxes`: the app
+iterates the registry instead of hardcoding a tab list, so a new toolbox
+plugs in without touching this module.
 
 Importing this module is side-effect free (no Tk objects are created);
 call :func:`main` to launch.
@@ -20,6 +24,7 @@ from tkinter import filedialog, messagebox, ttk
 
 from suite import __version__
 from suite import runners
+from suite import toolboxes
 from suite.licensing import check_license, license_required
 from suite.mapview import SurveyMapView, photoimage_from_rgb
 from suite.project import SurveyProject, recent_projects, remember_project
@@ -88,7 +93,7 @@ def _scrollable_text(parent, height: int = 12, width: int = 70) -> tk.Text:
 # ---------------------------------------------------------------------------
 
 class SurveySuiteApp(tk.Tk):
-    """The SurveySuite main window: six workflow tabs + status bar."""
+    """The SurveySuite main window: toolbox tabs + status bar."""
 
     ARTIFACT_ROWS = [
         ("job_path", "Field job (.sfield.json)"),
@@ -113,12 +118,15 @@ class SurveySuiteApp(tk.Tk):
         nb = ttk.Notebook(self)
         nb.pack(fill="both", expand=True)
         self._notebook = nb
-        self._build_project_tab(nb)
-        self._build_import_tab(nb)
-        self._build_adjust_tab(nb)
-        self._build_map_tab(nb)
-        self._build_draft_tab(nb)
-        self._build_basemap_tab(nb)
+        # Tabs come from the toolbox registry -- no hardcoded tab list.
+        # Each factory builds its frame; the app adds it under the
+        # toolbox's title. (A factory whose engine_deps are missing
+        # builds a "not installed" notice instead.)
+        self._toolbox_frames = {}
+        for tb in toolboxes.all_toolboxes():
+            frame = tb.tab_factory(self, nb, tb)
+            nb.add(frame, text=tb.title)
+            self._toolbox_frames[tb.id] = frame
 
         self.status_var = tk.StringVar()
         status = ttk.Label(self, textvariable=self.status_var, anchor="w",
@@ -155,7 +163,7 @@ class SurveySuiteApp(tk.Tk):
             "Emlid field data -> weighted adjustment ->\n"
             "plat/plan/map PDFs with a sealed title block.\n\n"
             "Engines: survey-field, survey-adjust-workflow,\n"
-            "survey-drafting, survey-basemap.")
+            "survey-drafting, survey-basemap, survey-crs.")
 
     def _refresh_status(self):
         tier = self.license_status.tier if self.license_status else "unknown"
@@ -222,6 +230,12 @@ class SurveySuiteApp(tk.Tk):
             return False
         return True
 
+    def select_toolbox(self, toolbox_id: str) -> None:
+        """Switch the notebook to a registered toolbox tab."""
+        frame = self._toolbox_frames.get(toolbox_id)
+        if frame is not None:
+            self._notebook.select(frame)
+
     def set_project(self, proj: SurveyProject | None):
         self.project = proj
         if proj is not None:
@@ -236,6 +250,9 @@ class SurveySuiteApp(tk.Tk):
             self._sync_draft_surveyor()
         else:
             self.title(f"SurveySuite {__version__}")
+        self._sync_proj_crs_display()
+        self.refresh_import_crs_status()
+        self.refresh_coords_crs_display()
         self._refresh_checklist()
         self._refresh_recent()
         self.refresh_map()
@@ -310,7 +327,6 @@ class SurveySuiteApp(tk.Tk):
     # =====================================================================
     def _build_project_tab(self, nb):
         frame = ttk.Frame(nb, padding=10)
-        nb.add(frame, text="Project")
 
         top = ttk.LabelFrame(frame, text="Project file", padding=8)
         top.pack(fill="x")
@@ -329,8 +345,16 @@ class SurveySuiteApp(tk.Tk):
                    command=self._browse_project_dir).grid(row=0, column=1,
                                                           padx=(4, 0))
         ttk.Label(top, text="CRS:").grid(row=2, column=0, sticky="w")
-        self.proj_crs = ttk.Entry(top)
-        self.proj_crs.grid(row=2, column=1, sticky="ew", padx=4)
+        crsrow = ttk.Frame(top)
+        crsrow.grid(row=2, column=1, sticky="ew", padx=4)
+        crsrow.columnconfigure(0, weight=1)
+        # Read-only: CRS strings come from the Coordinates toolbox picker,
+        # never from free text (v0.3.0 -- no more unvalidated CRS strings).
+        self.proj_crs = ttk.Entry(crsrow, state="readonly")
+        self.proj_crs.grid(row=0, column=0, sticky="ew")
+        ttk.Button(crsrow, text="Choose...",
+                   command=self._goto_coordinates_tab).grid(row=0, column=1,
+                                                            padx=(4, 0))
         btnrow = ttk.Frame(top)
         btnrow.grid(row=3, column=0, columnspan=2, pady=(6, 0))
         ttk.Button(btnrow, text="New project",
@@ -368,6 +392,7 @@ class SurveySuiteApp(tk.Tk):
         ttk.Button(chk, text="Refresh",
                    command=self._refresh_checklist).pack(pady=(4, 0))
         self._refresh_checklist()
+        return frame
 
     def _labeled_entry(self, parent, label, row, col):
         ttk.Label(parent, text=label).grid(row=row, column=col, sticky="w",
@@ -382,6 +407,22 @@ class SurveySuiteApp(tk.Tk):
             self.proj_dir.delete(0, "end")
             self.proj_dir.insert(0, d)
 
+    # -- project CRS (Coordinates toolbox picker) -------------------------
+    def _set_proj_crs_text(self, text: str) -> None:
+        self.proj_crs.configure(state="normal")
+        self.proj_crs.delete(0, "end")
+        self.proj_crs.insert(0, text)
+        self.proj_crs.configure(state="readonly")
+
+    def _sync_proj_crs_display(self) -> None:
+        if not hasattr(self, "proj_crs"):
+            return
+        self._set_proj_crs_text(
+            self.project.crs if self.project and self.project.crs else "")
+
+    def _goto_coordinates_tab(self) -> None:
+        self.select_toolbox("coordinates")
+
     def _open_recent_selected(self):
         sel = self.recent_list.curselection()
         if sel:
@@ -392,7 +433,6 @@ class SurveySuiteApp(tk.Tk):
     # =====================================================================
     def _build_import_tab(self, nb):
         frame = ttk.Frame(nb, padding=10)
-        nb.add(frame, text="Import")
         self.import_csvs: list[str] = []
         self.last_import = None  # (ImportResult, tmp job path)
 
@@ -428,9 +468,14 @@ class SurveySuiteApp(tk.Tk):
         self.import_save_btn = ttk.Button(act, text="Save job into project",
                                           command=self._save_import_job)
         self.import_save_btn.pack(side="left", padx=4)
+        self.import_crs_status = tk.StringVar(
+            value="Reproject on import: OFF (toggle on the Coordinates tab)")
+        ttk.Label(frame, textvariable=self.import_crs_status,
+                  foreground="#555555").pack(anchor="w", pady=(0, 4))
 
         ttk.Label(frame, text="Validation report:").pack(anchor="w")
         self.import_report = _scrollable_text(frame, height=16)
+        return frame
 
     def _import_add_csvs(self):
         paths = filedialog.askopenfilenames(
@@ -475,7 +520,8 @@ class SurveySuiteApp(tk.Tk):
                 list(self.import_csvs), tmp.name,
                 project_name=(self.project.name
                               if self.project else ""),
-                thresholds=thresholds)
+                thresholds=thresholds,
+                target_crs=self._import_target_crs())
             return result, tmp.name
 
         def done(res):
@@ -513,6 +559,25 @@ class SurveySuiteApp(tk.Tk):
                                 if i.get("point_name") else ""))
         if result.n_errors == 0 and result.n_warnings == 0:
             lines.append("  (none)")
+        rep = result.reproject
+        if rep:
+            lines += ["", "===== CRS REPROJECTION ====="]
+            lines.append(
+                f"  source: {rep['source_name']} (EPSG:{rep['source_epsg']})")
+            lines.append(
+                f"  target: {rep['target_name']} (EPSG:{rep['target_epsg']})")
+            if rep["applied"]:
+                lines.append(f"  applied to {rep['n_points']} point(s)")
+            else:
+                lines.append("  not applied (points already in the "
+                             "target CRS)")
+            if rep["notes"]:
+                lines.append("  notes:")
+                lines += [f"    - {n}" for n in rep["notes"]]
+            if rep["warnings"]:
+                lines.append("  DATUM WARNINGS -- review before using as "
+                             "control:")
+                lines += [f"    ! {w}" for w in rep["warnings"]]
         return "\n".join(lines)
 
     def _save_import_job(self):
@@ -535,6 +600,49 @@ class SurveySuiteApp(tk.Tk):
         self.refresh_map()
         messagebox.showinfo("Job saved", f"Job written to:\n{dest}")
 
+    # -- reproject on import (Coordinates toolbox toggle) -----------------
+    def _import_target_crs(self) -> str | None:
+        """Project CRS when the Coordinates reproject toggle is on."""
+        var = getattr(self, "coord_reproject_var", None)
+        if var is None or not var.get():
+            return None
+        if self.project is None or not self.project.crs:
+            return None
+        return self.project.crs
+
+    def refresh_import_crs_status(self) -> None:
+        if not hasattr(self, "import_crs_status"):
+            return
+        var = getattr(self, "coord_reproject_var", None)
+        if var is not None and var.get():
+            tgt = self._import_target_crs()
+            if tgt:
+                self.import_crs_status.set(
+                    f"Reproject on import: ON  →  {tgt}")
+            else:
+                self.import_crs_status.set(
+                    "Reproject on import: ON — no project CRS set "
+                    "(pick one on the Coordinates tab)")
+        else:
+            self.import_crs_status.set(
+                "Reproject on import: OFF (toggle on the Coordinates tab)")
+
+    def refresh_coords_crs_display(self) -> None:
+        if not hasattr(self, "coord_target_var"):
+            return
+        crs_name = (self.project.crs
+                    if self.project and self.project.crs else "")
+        var = getattr(self, "coord_reproject_var", None)
+        on = var is not None and var.get()
+        if on:
+            self.coord_target_var.set(
+                "Import target: "
+                + (crs_name or "(no project CRS set — pick one above)"))
+        else:
+            self.coord_target_var.set(
+                "Import target (when enabled): "
+                + (crs_name or "(no project CRS set)"))
+
     # =====================================================================
     # tab 3: Adjust
     # =====================================================================
@@ -552,7 +660,6 @@ class SurveySuiteApp(tk.Tk):
 
     def _build_adjust_tab(self, nb):
         frame = ttk.Frame(nb, padding=10)
-        nb.add(frame, text="Adjust")
 
         wbox = ttk.LabelFrame(frame, text="Stochastic model (weights)",
                               padding=8)
@@ -629,6 +736,7 @@ class SurveySuiteApp(tk.Tk):
         self.adjust_notes.pack(fill="x")
 
         self._weights_load_defaults(silent=True)
+        return frame
 
     def _browse_traverse(self):
         p = filedialog.askopenfilename(
@@ -806,7 +914,6 @@ class SurveySuiteApp(tk.Tk):
     # =====================================================================
     def _build_map_tab(self, nb):
         frame = ttk.Frame(nb, padding=6)
-        nb.add(frame, text="Map")
 
         toolbar = ttk.Frame(frame)
         toolbar.pack(fill="x", pady=(0, 4))
@@ -830,6 +937,7 @@ class SurveySuiteApp(tk.Tk):
 
         self.mapview = SurveyMapView(frame)
         self.mapview.pack(fill="both", expand=True)
+        return frame
 
     def _map_fit(self):
         self.mapview.fit()
@@ -919,7 +1027,6 @@ class SurveySuiteApp(tk.Tk):
 
     def _build_draft_tab(self, nb):
         frame = ttk.Frame(nb, padding=10)
-        nb.add(frame, text="Draft")
         self.draft_parcel: dict | None = None
 
         # -- parcel builder ------------------------------------------------
@@ -1051,6 +1158,7 @@ class SurveySuiteApp(tk.Tk):
 
         ttk.Label(frame, text="Manifest:").pack(anchor="w")
         self.draft_out = _scrollable_text(frame, height=10)
+        return frame
 
     def _labeled_combo(self, parent, label, row, col, values, default):
         ttk.Label(parent, text=label).grid(row=row, column=col, sticky="w",
@@ -1068,6 +1176,8 @@ class SurveySuiteApp(tk.Tk):
         self.draft_scale.set("fit")
 
     def _sync_draft_surveyor(self):
+        if not hasattr(self, "draft_surv_name"):
+            return  # Draft tab not built (drafting engine missing)
         p = self.project
         if p is None:
             return
@@ -1284,7 +1394,6 @@ class SurveySuiteApp(tk.Tk):
 
     def _build_basemap_tab(self, nb):
         frame = ttk.Frame(nb, padding=10)
-        nb.add(frame, text="Basemap")
         self.basemap_info_data: dict | None = None
 
         pick = ttk.LabelFrame(frame, text="Orthomosaic (GeoTIFF)", padding=8)
@@ -1325,6 +1434,7 @@ class SurveySuiteApp(tk.Tk):
         self.basemap_ov_btn.pack(side="left", padx=4)
         ttk.Button(act, text="Attach to project",
                    command=self._basemap_attach).pack(side="left", padx=4)
+        return frame
 
     def _basemap_browse(self):
         p = filedialog.askopenfilename(

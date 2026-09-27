@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "survey-suite"
-version = "0.2.0"
+version = "0.3.0"
 description = "SurveySuite: meta-package and desktop application over the survey-suite engines"
 readme = "README.md"
 requires-python = ">=3.9"
@@ -24,8 +24,9 @@ dependencies = [
     "survey-raster @ git+https://github.com/crieck2010/survey-raster.git",
     "survey-pointcloud @ git+https://github.com/crieck2010/survey-pointcloud.git",
     "survey-gnss @ git+https://github.com/crieck2010/survey-gnss.git",
-    "survey-field @ git+https://github.com/crieck2010/survey-field@v0.1.0",
-    "survey-adjust-workflow @ git+https://github.com/crieck2010/survey-adjust-workflow@v0.1.1",
+    "survey-field @ git+https://github.com/crieck2010/survey-field@v0.2.0",
+    "survey-crs @ git+https://github.com/crieck2010/survey-crs@v0.1.0",
+    "survey-adjust-workflow @ git+https://github.com/crieck2010/survey-adjust-workflow@v0.1.2",
     "survey-drafting @ git+https://github.com/crieck2010/survey-drafting@v0.1.2",
     "survey-basemap @ git+https://github.com/crieck2010/survey-basemap@v0.1.0",
 ]

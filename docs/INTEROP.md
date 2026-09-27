@@ -13,10 +13,11 @@ pins match the engines' own `pyproject.toml` pins exactly:
 | Package | Pin | Pinned by |
 |---|---|---|
 | survey-adjust | `@bc14483` | survey-adjust-workflow |
-| survey-field | `@v0.1.0` | survey-adjust-workflow |
+| survey-field | `@v0.2.0` | this repo (reproject-on-import via `field.reproject`) |
 | survey-cogo | `@f59b04d` | survey-drafting |
+| survey-crs | `@v0.1.0` | this repo (Coordinates toolbox picker + reproject backend) |
 | survey-drafting | `@v0.1.2` | this repo (RasterSource basemap option; skip elevation-only stations in draw/extent) |
-| survey-adjust-workflow | `@v0.1.1` | this repo (merge duplicate stations across paths) |
+| survey-adjust-workflow | `@v0.1.2` | this repo (merge duplicate stations across paths; survey-field v0.2.0 pin) |
 | survey-basemap | `@v0.1.0` | — |
 | survey-levels/geodesy/raster/pointcloud/gnss | `@main` | — |
 
@@ -31,6 +32,37 @@ pins match the engines' own `pyproject.toml` pins exactly:
   `has_errors(issues)` gates the chain.
 - `field.jobfile.write_job(project, path)` / `read_job(path)`;
   `field.adapters.job_summary(project)`.
+- **Reproject on import** (v0.2.0): `runners.run_import(...,
+  target_crs="EPSG:6539")` calls
+  `field.reproject.reproject_project(project, target_crs)` after the
+  plain `write_job`, then re-writes the job with reprojected points +
+  `crs_provenance`. Returns `ReprojectReport(applied, n_points,
+  source_name, target_name, notes, warnings, provenance)`; the runner
+  surfaces `notes`/`warnings` in `ImportResult.reproject` and the GUI
+  prints them in the CRS REPROJECTION report section. Target accepts a
+  registry name, `"EPSG:6539"`, or bare `"6539"`. On refusal
+  (`CrsReprojectError`) the runner deletes the just-written job file so
+  no half-reprojected artifact survives.
+
+## survey-crs (Coordinates tab + reproject backend)
+
+- Registry API used by the picker: `crs.search(text)`,
+  `crs.by_epsg(code)`, `crs.zones_for_state("NY")`,
+  `crs.group_by_type()` → `spcs`/`utm`/`geographic`,
+  `crs.suggest(lat, lon)` (lat/lon position → containing SPCS zones,
+  then UTM), `crs.list_entries()`. 345 entries, v0.1.0.
+- `CrsEntry` fields the picker shows: `name`, `epsg`, `datum`, `kind`,
+  `unit`/`unit_label`, `area_name`, `bbox`, `state`/`zone`,
+  `source_url`, `notes`, `group`.
+- Transform backend for reproject: `crs.transform_coords(lon, lat,
+  src_epsg, tgt_epsg, h=…)`; datum-shift accuracy warnings surface via
+  `ReprojectReport.warnings` and are printed verbatim in the import
+  report — never hidden.
+- Known v0.1.0 limits the UI states honestly: no geoid/NAVD88
+  (ellipsoidal heights only), null-approximation datum paths between
+  distinct datums, no base-station reprojection, refusal on
+  projected-to-different-projected, `suggest()` is bbox-coarse near
+  zone edges.
 
 ## survey-adjust-workflow (Adjust tab)
 

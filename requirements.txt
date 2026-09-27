@@ -7,8 +7,9 @@ git+https://github.com/crieck2010/survey-geodesy.git
 git+https://github.com/crieck2010/survey-raster.git
 git+https://github.com/crieck2010/survey-pointcloud.git
 git+https://github.com/crieck2010/survey-gnss.git
-git+https://github.com/crieck2010/survey-field@v0.1.0
-git+https://github.com/crieck2010/survey-adjust-workflow@v0.1.1
+git+https://github.com/crieck2010/survey-field@v0.2.0
+git+https://github.com/crieck2010/survey-crs@v0.1.0
+git+https://github.com/crieck2010/survey-adjust-workflow@v0.1.2
 git+https://github.com/crieck2010/survey-drafting@v0.1.2
 git+https://github.com/crieck2010/survey-basemap@v0.1.0
 # Build tooling (Windows packaging only)

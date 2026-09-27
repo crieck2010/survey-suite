@@ -12,16 +12,21 @@ least-squares adjustment with a written justification, draft plats/plans/maps
 to PDF over a toggleable drone-orthomosaic basemap — all offline, on your
 own machine.
 
-**v0.2.0 "field-to-finish"** is the first product release: the five-build
-program (field import → adjustment workflow → drafting/deliverables →
-drone basemap → desktop app) wired into one GUI.
+**v0.3.0 "coordinates"** is the final build of the current sequence:
+a registry-driven **toolbox** architecture (new toolboxes plug in
+without touching the app), the native **Coordinates** CRS-picker
+toolbox over the survey-crs registry, and **reproject-on-import**
+threading the project CRS into Import via survey-field v0.2.0.
 
 ## The 5-minute field-to-finish tour
 
-1. **Project tab** — New project, name it, set the CRS (e.g.
-   `NAD83(2011) / UTM zone 18N`), fill in your surveyor profile once.
+1. **Project tab** — New project, name it, pick the CRS in the
+   Coordinates toolbox (the field here is read-only — no more freehand
+   CRS strings), fill in your surveyor profile once.
 2. **Import tab** — pick your Emlid Flow CSVs → Run import. Errors and
    warnings are shown separately; the job saves as `.sfield.json`.
+   Geographic exports (lon/lat) can be reprojected into the project
+   CRS on import — tick the toggle on the Coordinates tab first.
 3. **Adjust tab** — the weights editor shows your stochastic model
    (RTK RMS × scale, mm/√km for levels, arcseconds, mm + ppm). Tune it,
    Validate, then Run adjustment. A green **VALID** banner plus the
@@ -35,6 +40,10 @@ drone basemap → desktop app) wired into one GUI.
    Compose PDF. The plat carries the title block with seal/signature
    block, line/curve tables, and your adjustment report as an appendix.
    If the adjustment isn't VALID, there is no plat — no override, on purpose.
+7. **Coordinates tab** — search the 345-entry CRS registry ("york long
+   island", or EPSG `6539`), filter by type/state, or get suggestions
+   for a lat/lon; **Set as project CRS** writes it into the `.sproj`.
+   The datum note is editable and copies straight into the Draft tab.
 
 ## Install (from source)
 
@@ -57,7 +66,7 @@ must be produced on a Windows PC. On the ASUS:
 2. Double-click **`build_exe.bat`** — installs everything, builds
    `dist\SurveySuite\SurveySuite.exe`.
 3. (Optional installer) Open **`installer.iss`** in Inno Setup and hit
-   Compile → `SurveySuite-0.2.0-setup.exe`.
+   Compile → `SurveySuite-0.3.0-setup.exe`.
 
 That's it — three steps, no command line needed after step 1.
 
@@ -120,8 +129,10 @@ the processed solutions. Raw carrier-phase processing is out of scope.
 
 ## Docs
 
-- [`docs/USER_GUIDE.md`](docs/USER_GUIDE.md) — every tab, and the weights
-  editor explained (doubles as FS-exam study material)
+- [`docs/USER_GUIDE.md`](docs/USER_GUIDE.md) — every toolbox, and the
+  weights editor explained (doubles as FS-exam study material)
+- [`docs/TOOLBOXES.md`](docs/TOOLBOXES.md) — the toolbox registry
+  contract: how to add a new toolbox without touching the app
 - [`docs/INTEROP.md`](docs/INTEROP.md) — the contracts between this repo
   and the engine repos
 - [`CHANGELOG.md`](CHANGELOG.md) — version history

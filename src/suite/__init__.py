@@ -6,6 +6,6 @@ Thin integration layer only -- all surveying math lives in the engine
 packages. See README.md for the product tour.
 """
 
-__version__ = "0.2.0"
+__version__ = "0.3.0"
 
 __all__ = ["__version__"]

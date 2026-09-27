@@ -213,3 +213,92 @@ def test_not_valid_adjustment_refuses_plat(workdir):
         runners.run_draft(adj.sadj_path, parcel, None,
                           os.path.join(workdir, "nope.pdf"),
                           options={"kind": "plat"})
+
+
+# ---------------------------------------------------------------------------
+# v0.3.0: reproject-on-import (project CRS threaded into Import)
+# ---------------------------------------------------------------------------
+
+def geo_emlid_row(name, lon, lat, h, day):
+    """Emlid Flow *geographic* export: E/N/Elevation empty, lon/lat +
+    ellipsoidal height filled, CS name WGS 84 (EPSG:4326)."""
+    return (f"{name},EP,,,,desc,{lon},{lat},{h},Global,0.8,0.011,0.010,0.018,"
+            f"0.015,2.000,m,FIX,RTK,{day} 14:02:11.2 UTC+00:00,"
+            f"{day} 14:02:16.2 UTC+00:00,25,1.8,,,,,,,"
+            f"17.832,WGS 84")
+
+
+def test_import_reprojects_geographic_csv_to_target_crs(workdir):
+    """Geographic Emlid export + target EPSG:6539: points land in NY
+    Long Island ftUS, provenance is recorded, and the WGS84->NAD83(2011)
+    datum warning surfaces."""
+    pytest.importorskip("field.reproject")
+    crs = pytest.importorskip("crs")
+    geo = os.path.join(workdir, "geo.csv")
+    pts = [("G101", -77.60972, 43.16112),
+           ("G102", -77.60850, 43.16150),
+           ("G103", -77.60850, 43.16200),
+           ("G104", -77.60972, 43.16200)]
+    with open(geo, "w", encoding="utf-8") as fh:
+        fh.write(EMLID_HEADER + "\n")
+        for name, lon, lat in pts:
+            fh.write(geo_emlid_row(name, lon, lat, 136.0,
+                                   "2026-09-25") + "\n")
+    job_path = os.path.join(workdir, "geo.sfield.json")
+    imp = runners.run_import([geo], job_path, project_name="geo",
+                             target_crs="EPSG:6539")
+    rep = imp.reproject
+    assert rep is not None
+    assert rep["applied"] is True
+    assert rep["n_points"] == 4
+    assert rep["source_epsg"] == 4326
+    assert rep["target_epsg"] == 6539
+    assert rep["target_name"] == "NAD83(2011) / New York Long Island (ftUS)"
+    # the WGS84 -> NAD83(2011) jump is a null approximation: the warning
+    # must be loud in the result the Import tab shows
+    assert any("datum" in w.lower() for w in rep["warnings"]), rep["warnings"]
+    # job file carries the reprojected points + provenance
+    with open(job_path, encoding="utf-8") as fh:
+        job = json.load(fh)
+    assert job["project"]["crs"] == "NAD83(2011) / New York Long Island (ftUS)"
+    prov = job["project"].get("crs_provenance", {})
+    assert prov["target_crs"]["epsg"] == 6539
+    assert prov["source_crs"]["epsg"] == 4326
+    assert len(job["project"]["sessions"][0]["points"]) == 4
+    # independent oracle: survey-crs itself transforms the same corner
+    r = crs.transform_coords(-77.60972, 43.16112, 4326, 6539, h=136.0)
+    got = {p["name"]: p for p in job["project"]["sessions"][0]["points"]}
+    assert got["G101"]["easting"] == pytest.approx(r.x)
+    assert got["G101"]["northing"] == pytest.approx(r.y)
+    # heights stay ellipsoidal (survey-crs v0.1.0 has no geoid/NAVD88)
+    assert got["G101"]["ellipsoidal_height"] == pytest.approx(136.0)
+
+
+def test_import_without_target_crs_unchanged(workdir):
+    """No target_crs: geographic CSV stays geographic, reproject is None."""
+    pytest.importorskip("field.reproject")
+    geo = os.path.join(workdir, "geo2.csv")
+    with open(geo, "w", encoding="utf-8") as fh:
+        fh.write(EMLID_HEADER + "\n")
+        fh.write(geo_emlid_row("G201", -77.60972, 43.16112, 136.0,
+                               "2026-09-25") + "\n")
+    job_path = os.path.join(workdir, "geo2.sfield.json")
+    imp = runners.run_import([geo], job_path, project_name="geo2")
+    assert imp.reproject is None
+    with open(job_path, encoding="utf-8") as fh:
+        job = json.load(fh)
+    assert job["project"]["crs"] == "WGS 84"
+    assert "crs_provenance" not in job["project"]
+
+
+def test_import_refuses_projected_to_different_crs(workdir):
+    """Projected CSV whose CRS cannot be mapped to the target: loud
+    refusal, and no half-written job file is left behind."""
+    reproj = pytest.importorskip("field.reproject")
+    day1 = os.path.join(workdir, "day1.csv")
+    write_csv(day1, "2026-09-25", {})
+    job_path = os.path.join(workdir, "job.sfield.json")
+    with pytest.raises(reproj.CrsReprojectError, match="[Rr]efus"):
+        runners.run_import([day1], job_path, project_name="x",
+                           target_crs="EPSG:6539")
+    assert not os.path.exists(job_path)

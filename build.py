@@ -9,11 +9,28 @@ Usage:
 """
 from __future__ import annotations
 
+import pkgutil
 import subprocess
 import sys
 
 APP_NAME = "SurveySuite"
 ENTRY = "src/suite/app.py"
+
+
+def _toolbox_hidden_imports() -> list[str]:
+    """Every suite.toolbox_* module, for PyInstaller.
+
+    Toolbox modules self-register via importlib with a computed module
+    name, which static analysis cannot see -- without this the frozen
+    app would silently lose every auto-discovered toolbox.
+    """
+    sys.path.insert(0, "src")
+    import suite as _suite_pkg
+    return [
+        f"suite.{info.name}"
+        for info in pkgutil.iter_modules(_suite_pkg.__path__)
+        if info.name.startswith("toolbox_")
+    ]
 
 
 def main() -> None:
@@ -26,8 +43,10 @@ def main() -> None:
         f"--name={APP_NAME}",
         # tkinter is stdlib; make sure its data files are collected
         "--collect-all", "tkinter",
-        ENTRY,
     ]
+    for mod in _toolbox_hidden_imports():
+        cmd += ["--hidden-import", mod]
+    cmd.append(ENTRY)
     if onefile:
         cmd.insert(3, onefile)
     print("Running:", " ".join(cmd))

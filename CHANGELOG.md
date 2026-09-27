@@ -2,6 +2,78 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.3.0] - 2026-09-27 -- "coordinates"
+
+Final build of the current three-build sequence: the toolbox registry,
+the native Coordinates toolbox, and reproject-on-import.
+
+### Added
+- Registry-driven toolbox architecture (`suite.toolboxes`): the
+  `Toolbox` spec (id, title, tab_factory, engine_deps, description,
+  order), `register_toolbox` / `all_toolboxes` / `toolbox_by_id` /
+  `missing_engine_deps`, duplicate-id rejection, and auto-discovery of
+  every `suite.toolbox_*` module. `suite.app` iterates the registry --
+  no hardcoded tab list. A future toolbox is one new module with one
+  `register_toolbox(...)` call; `app.py` is never touched.
+- Missing engine dependencies degrade per-tab: a toolbox whose
+  `engine_deps` aren't importable builds a "not installed" notice frame
+  with a `pip install` hint instead of raising. The app always launches.
+- **Coordinates toolbox** (native, order 70): CRS picker over the
+  survey-crs v0.1.0 registry (345 entries) -- text search, EPSG lookup
+  ("6539" / "EPSG:6539"), SPCS/UTM/Geographic type filter, state filter
+  (defaults to NY), position suggestions via `crs.suggest(lat, lon)`,
+  honest UI-level "did you mean …?" fallback for no-hit queries,
+  selection details (name, EPSG, datum, kind, unit, area of use,
+  state/zone, source, notes), "Set as project CRS", editable datum-note
+  field with "Copy to Draft tab", and the reproject-on-import toggle.
+- **Reproject on import**: `runners.run_import(..., target_crs=...)`
+  threads the project CRS into Import when the Coordinates toggle is
+  on. Geographic Emlid exports are transformed via
+  `field.reproject.reproject_project` (survey-field v0.2.0, survey-crs
+  backend); the job file keeps the `crs_provenance` block and the
+  Import tab's report gains a CRS REPROJECTION section with datum-shift
+  warnings. Projected-in-a-different-CRS input is refused loudly and
+  no half-written job file survives.
+- Project tab: the free-text CRS field is gone -- read-only display +
+  "Choose…" jumping to the Coordinates picker. New projects capture the
+  picker's pending selection; opened projects sync their stored CRS.
+- Tests: `tests/test_toolboxes.py` (registry contract, ordering,
+  duplicate/invalid ids, missing-dep notice wiring, picker helpers
+  against the real survey-crs registry) and GUI flow tests in
+  `tests/test_app_smoke.py` (seven tabs from the registry; full
+  Coordinates picker flow: search → select → pending CRS → new project
+  → reproject toggle → Import target). 48 tests pass (xvfb).
+- Docs: new `docs/TOOLBOXES.md` (registry contract + minimal toolbox
+  module example), USER_GUIDE gains the Coordinates tab and the NY
+  Emlid-geographic → EPSG:6539 workflow, INTEROP gains the survey-crs
+  section and the reproject handoff.
+
+### Changed
+- Pinned `survey-field@v0.2.0` (reproject API) and added
+  `survey-crs@v0.1.0` (picker + transform backend).
+- Pinned `survey-adjust-workflow@v0.1.2` (packaging: survey-field pin
+  v0.1.0 → v0.2.0; adjustment behavior, weights editor, and
+  justification report untouched).
+- `installer.iss` and package version bumped to 0.3.0.
+
+### Fixed (interop, landed in the engine repos)
+- `survey-adjust-workflow v0.1.2`: dependency metadata now accepts
+  `survey-field v0.2.0`, resolving the pip `ResolutionImpossible`
+  between the suite's field pin and the workflow's field pin. Verified:
+  all 52 engine tests pass unchanged against survey-field v0.2.0.
+
+### Limitations (stated, not fixed)
+- survey-crs v0.1.0 has no geoid/NAVD88 model: heights are ellipsoidal.
+- Datum transforms between distinct datums may be null approximations;
+  accuracy warnings are surfaced in the import report -- never treat the
+  output as survey control without reading them.
+- survey-field v0.2.0 does not reproject base stations, and refuses
+  projected-to-different-projected CRS transformations.
+- The CRS registry is intentionally limited to its 345 entries;
+  `suggest()` is bbox-based and coarse near zone boundaries.
+- The Windows `.exe` must be built on the user's ASUS; the Linux
+  PyInstaller run only proves the spec still works.
+
 ## [0.2.0] - 2026-09-26 -- "field-to-finish"
 
 ### Added
