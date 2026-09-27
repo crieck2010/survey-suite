@@ -39,7 +39,7 @@ drone basemap → desktop app) wired into one GUI.
 ## Install (from source)
 
 ```bash
-pip install -r requirements.txt   # eleven engines, from public GitHub repos
+pip install -r requirements.txt   # twelve engines, from public GitHub repos
 pip install -e .
 survey-suite                      # launch the desktop app
 ```
@@ -72,10 +72,11 @@ That's it — three steps, no command line needed after step 1.
 | `survey-raster` | Rasters: indices (NDVI/EVI/...), stats, resampling, tiling |
 | `survey-pointcloud` | Point clouds: thinning, ground classification, DEMs, volumes |
 | `survey-gnss` | GNSS: NMEA parsing, WGS84, DOP, session statistics |
-| `survey-field` | Field import: Emlid Flow/ReachView CSV → canonical job, validation |
+| `survey-field` | Field import: Emlid Flow/ReachView CSV -> canonical job, validation |
 | `survey-adjust-workflow` | Adjustment: user-weighted LS (RTK means, level nets, traverse), Baarda snooping, justification reports |
 | `survey-drafting` | Drafting: plats/plans/maps to PDF, validity gate, metes-and-bounds |
 | `survey-basemap` | Drone basemap: GeoTIFF reader, overviews, CRS gate, drafting adapter |
+| `survey-crs` | CRS registry + transforms: 345 EPSG-researched entries (NAD83(2011) SPCS, WGS 84 UTM, geographic), stdlib TM/LCC/Hotine/UTM engine, datum accuracy metadata, picker API, CLI |
 
 Each engine is pure Python, dependency-free, independently tested, and
 usable on its own. This repo adds the product layer:
@@ -91,12 +92,12 @@ usable on its own. This repo adds the product layer:
 
 **Where does the .exe come from?**
 From *your* machine. `build_exe.bat` runs PyInstaller locally and bundles
-the Python interpreter plus all eleven engines into one file. Nothing is
+the Python interpreter plus all twelve engines into one file. Nothing is
 downloaded at runtime; the app works fully offline.
 
 **Do I need internet?**
 Only for the initial `pip install` (engines come from GitHub). After that,
-field → plat runs offline.
+field -> plat runs offline.
 
 **Why won't it draft my plat?**
 The validity gate: drafting requires a VALID adjustment verdict. Open the
