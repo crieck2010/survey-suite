@@ -72,7 +72,7 @@ That's it — three steps, no command line needed after step 1.
 | `survey-raster` | Rasters: indices (NDVI/EVI/...), stats, resampling, tiling |
 | `survey-pointcloud` | Point clouds: thinning, ground classification, DEMs, volumes |
 | `survey-gnss` | GNSS: NMEA parsing, WGS84, DOP, session statistics |
-| `survey-field` | Field import: Emlid Flow/ReachView CSV -> canonical job, validation |
+| `survey-field` | Field import: Emlid Flow/ReachView CSV -> canonical job, validation, optional `--target-crs` reprojection |
 | `survey-adjust-workflow` | Adjustment: user-weighted LS (RTK means, level nets, traverse), Baarda snooping, justification reports |
 | `survey-drafting` | Drafting: plats/plans/maps to PDF, validity gate, metes-and-bounds |
 | `survey-basemap` | Drone basemap: GeoTIFF reader, overviews, CRS gate, drafting adapter |
