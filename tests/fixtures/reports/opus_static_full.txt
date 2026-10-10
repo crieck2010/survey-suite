@@ -1,0 +1,48 @@
+FILE: syra274a.26o OP20261008120000
+
+NGS OPUS SOLUTION REPORT
+========================
+All computed coordinate accuracies are listed as peak-to-peak values.
+For additional information: https://www.ngs.noaa.gov/OPUS/about.jsp#accuracy
+
+USER: surveyor@example.com                   DATE: October 08, 2026
+RINEX FILE: syra274a.26o                     TIME: 18:22:41 UTC
+
+SOFTWARE: page5 2008.25 master312.pl 160321  START: 2026/10/01 14:00:00
+EPHEMERIS: igs23344.eph [precise]            STOP: 2026/10/01 20:00:00
+NAV FILE: brdc2740.26n                       OBS USED: 8123 / 8456  :  96%
+ANT NAME: TRM57971.00 NONE                   # FIXED AMB:  41 /  44  :  93%
+ARP HEIGHT: 2.000                            OVERALL RMS: 0.012(m)
+
+REF FRAME: NAD_83(2011)(EPOCH:2010.0000)     ITRF2014 (EPOCH:2026.7498)
+
+           X:     -1567890.123(m)   0.004(m)          -1567891.002(m)   0.004(m)
+           Y:     -4567890.456(m)   0.008(m)          -4567889.210(m)   0.008(m)
+           Z:      4321098.765(m)   0.006(m)           4321098.700(m)   0.006(m)
+
+         LAT:   43  2 15.12345      0.005(m)        43  2 15.14098      0.005(m)
+       E LON:  283 51 17.01235      0.003(m)       283 51 16.99876      0.003(m)
+       W LON:   76  8 42.98765      0.003(m)        76  8 43.00124      0.003(m)
+      EL HGT:         175.432(m)   0.009(m)              174.718(m)   0.009(m)
+
+    ORTHO HGT:         209.851(m)   0.020(m) [NAVD88 (Computed using GEOID18)]
+
+UTM COORDINATES             STATE PLANE COORDINATES
+UTM (Zone 18)               SPC (3101 NY W)
+Northing (Y) [meters]       4768432.105           98765.432
+Easting  (X) [meters]        402118.765          654321.098
+Convergence [degrees]       -0.51234567           0.82345678
+Point Scale                  0.99961234           0.99998765
+Combined Factor              0.99958421           0.99995987
+
+US NATIONAL GRID DESIGNATOR: 18TXK0211846843(NAD 83)
+
+BASE STATIONS USED
+PID    DESIGNATION                                    LATITUDE     LONGITUDE      DISTANCE(m)
+AB1234 SYRA SYRACUSE CORS ARP                         N430215.123  W0760842.988     12345.6
+CD5678 ROCH ROCHESTER NY CORS ARP                     N431200.000  W0773000.000     98765.4
+EF9012 ALBY ALBANY NY CORS ARP                        N423900.500  W0734500.250
+                                                                                   150234.8
+
+NEAREST NGS PUBLISHED CONTROL POINT
+GH3456 A 12                                           N430100.000  W0760500.000      2345.6

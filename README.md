@@ -1,18 +1,24 @@
 # SurveySuite — field-to-finish land surveying software
 
+[![CI](https://github.com/crieck2010/survey-suite/actions/workflows/ci.yml/badge.svg)](https://github.com/crieck2010/survey-suite/actions/workflows/ci.yml)
+[![Python](https://img.shields.io/badge/python-3.9%2B-blue.svg)](https://www.python.org/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Zero Dependencies](https://img.shields.io/badge/dependencies-zero-brightgreen.svg)](pyproject.toml)
+
 > **Project scope:** this repo is the **terrestrial surveying** half of the
 > geospatial suite — field import, least-squares adjustment, drafting,
 > drone basemaps, and the desktop app. Remote-sensing work (satellite
 > imagery, change detection, site monitoring) lives in its own project:
 > **[crieck2010/earthwatch-suite](https://github.com/crieck2010/earthwatch-suite)**.
 
-SurveySuite is a standalone desktop application that takes you from the
-field to a finished plat: import Emlid RTK CSVs, run a user-weighted
+SurveySuite is a standalone desktop application and computational toolbox that
+takes you from the field to a finished plat: import Emlid RTK CSVs, run a user-weighted
 least-squares adjustment with a written justification, draft plats/plans/maps
 to PDF over a toggleable drone-orthomosaic basemap — all offline, on your
 own machine.
 
-**v0.4.0 "figures"** adds the native **Figures** toolbox: field-coded
+**v0.4.0 "figures"** consolidates all 15 terrestrial geomatics engines into a
+single, dependency-free monorepo, and adds the native **Figures** toolbox: field-coded
 linework from your Emlid shots — a Civil 3D Toolspace-style figure
 tree, linework drawn on the map canvas, a QA panel with plain-language
 flag explanations, and a strict gate before flagged linework may reach
@@ -54,9 +60,10 @@ the plat. Under it: registry-driven **toolbox** architecture,
 ## Install (from source)
 
 ```bash
-pip install -r requirements.txt   # thirteen engines, from public GitHub repos
-pip install -e .
-survey-suite                      # launch the desktop app
+git clone https://github.com/crieck2010/survey-suite.git
+cd survey-suite
+pip install -e .                 # zero external dependencies!
+survey-suite                     # launch the desktop app
 ```
 
 Requires Python ≥ 3.9 (3.11/3.12 recommended). Pure Python + tkinter —

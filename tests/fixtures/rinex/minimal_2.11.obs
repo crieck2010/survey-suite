@@ -1,0 +1,35 @@
+     2.11           OBSERVATION DATA    M: Mixed            RINEX VERSION / TYPE
+TESTRV                                                               MARKER NAME
+TESTRV001                                                          MARKER NUMBER
+Charlie Rieck       Colliers Engineering & Design              OBSERVER / AGENCY
+1234567             TRIMBLE R12i        5.52                 REC # / TYPE / VERS
+1234567             TRM59900.00         NONE                        ANT # / TYPE
+  1113194.9728 -4844136.2149  3985342.5672                   APPROX POSITION XYZ
+        1.8420        0.0000        0.0000                  ANTENNA: DELTA H/E/N
+     1     1                                                WAVELENGTH FACT L1/2
+     8    C1    L1    D1    S1    C2    L2    D2    S2       # / TYPES OF OBSERV
+   30.0000                                                              INTERVAL
+  2026    10     1     0     0    0.0000000     GPS            TIME OF FIRST OBS
+  2026    10     1     4     0    0.0000000     GPS             TIME OF LAST OBS
+  2026    10     1     0     0    0.0000000     GPS          RCV CLOCK OFFS APPL
+     6                                                              LEAP SECONDS
+    18                                                           # OF SATELLITES
+G01   960   960   960   960   960   960   960   960               PRN / # OF OBS
+G02   960   960   960   960   960   960   960   960               PRN / # OF OBS
+G03   960   960   960   960   960   960   960   960               PRN / # OF OBS
+G05   960   960   960   960   960   960   960   960               PRN / # OF OBS
+G06   960   960   960   960   960   960   960   960               PRN / # OF OBS
+G07   960   960   960   960   960   960   960   960               PRN / # OF OBS
+G09   960   960   960   960   960   960   960   960               PRN / # OF OBS
+G10   960   960   960   960   960   960   960   960               PRN / # OF OBS
+G11   960   960   960   960   960   960   960   960               PRN / # OF OBS
+G13   960   960   960   960   960   960   960   960               PRN / # OF OBS
+G15   960   960   960   960   960   960   960   960               PRN / # OF OBS
+G16   960   960   960   960   960   960   960   960               PRN / # OF OBS
+G17   960   960   960   960   960   960   960   960               PRN / # OF OBS
+G19   960   960   960   960   960   960   960   960               PRN / # OF OBS
+G20   960   960   960   960   960   960   960   960               PRN / # OF OBS
+G21   960   960   960   960   960   960   960   960               PRN / # OF OBS
+G22   960   960   960   960   960   960   960   960               PRN / # OF OBS
+G23   960   960   960   960   960   960   960   960               PRN / # OF OBS
+                                                                   END OF HEADER

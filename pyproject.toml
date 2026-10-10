@@ -1,41 +1,45 @@
 [build-system]
-requires = ["setuptools>=61"]
+requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "survey-suite"
 version = "0.4.0"
-description = "SurveySuite: meta-package and desktop application over the survey-suite engines"
+description = "Field-to-finish computational land surveying suite: COGO, least-squares, 345 CRS registry, linework, and vector PDF plat drafting"
 readme = "README.md"
 requires-python = ">=3.9"
 license = { text = "MIT" }
-authors = [{ name = "crieck2010" }]
-keywords = ["surveying", "cogo", "gnss", "lidar", "desktop"]
+authors = [{ name = "Charles Rieck", email = "crieck2010@users.noreply.github.com" }]
+keywords = ["surveying", "geomatics", "cogo", "geodesy", "least-squares", "cad", "plat-drafting"]
 classifiers = [
-    "Programming Language :: Python :: 3",
-    "License :: OSI Approved :: MIT License",
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Science/Research",
     "Topic :: Scientific/Engineering :: GIS",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
 ]
-dependencies = [
-    "survey-cogo @ git+https://github.com/crieck2010/survey-cogo@f59b04d8048d282cffe281723d53d521b720007d",
-    "survey-levels @ git+https://github.com/crieck2010/survey-levels.git",
-    "survey-adjust @ git+https://github.com/crieck2010/survey-adjust@bc144832aeddc77db9c73b7240c300f1774436a6",
-    "survey-geodesy @ git+https://github.com/crieck2010/survey-geodesy.git",
-    "survey-raster @ git+https://github.com/crieck2010/survey-raster.git",
-    "survey-pointcloud @ git+https://github.com/crieck2010/survey-pointcloud.git",
-    "survey-gnss @ git+https://github.com/crieck2010/survey-gnss.git",
-    "survey-field @ git+https://github.com/crieck2010/survey-field@v0.2.0",
-    "survey-crs @ git+https://github.com/crieck2010/survey-crs@v0.1.0",
-    "survey-adjust-workflow @ git+https://github.com/crieck2010/survey-adjust-workflow@v0.1.2",
-    "survey-drafting @ git+https://github.com/crieck2010/survey-drafting@v0.1.2",
-    "survey-basemap @ git+https://github.com/crieck2010/survey-basemap@v0.1.0",
-]
+# The entire core computation pipeline is standard-library only!
+dependencies = []
+
+[project.optional-dependencies]
+dev = ["pytest", "ruff"]
+desktop = ["pyinstaller", "Pillow"]
 
 [project.scripts]
 survey-suite = "suite.app:main"
-
-[project.urls]
-Repository = "https://github.com/crieck2010/survey-suite"
+cogo = "cogo.cli:main"
+field = "field.cli:main"
+adjustflow = "adjustflow.cli:main"
+draft = "drafting.cli:main"
+crs = "crs.cli:main"
+linework = "linework.cli:main"
+opus = "survey_opus.cli:main"
+basemap = "basemap.cli:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+addopts = "--import-mode=importlib"

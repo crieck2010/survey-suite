@@ -1,0 +1,2 @@
+This is definitely not a RINEX file.
+Just some text.

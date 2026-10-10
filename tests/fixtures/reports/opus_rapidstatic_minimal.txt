@@ -1,0 +1,27 @@
+FILE: frco280b.26o OP20261007143022
+
+NGS OPUS SOLUTION REPORT
+========================
+All computed coordinate accuracies are listed as peak-to-peak values.
+For additional information: https://www.ngs.noaa.gov/OPUS/about.jsp#accuracy
+
+USER: field@example.com                      DATE: October 07, 2026
+RINEX FILE: frco280b.26o                     TIME: 19:02:10 UTC
+
+SOFTWARE: page5 2008.25 master318.pl 160321  START: 2026/10/07 14:00:00
+EPHEMERIS: igr23340.eph [rapid]              STOP: 2026/10/07 14:45:00
+NAV FILE: brdc2800.26n                       OBS USED: 2145 / 2389  :  90%
+ANT NAME: EML_REACH_RS2 NONE                 # FIXED AMB:  18 /  24  :  75%
+ARP HEIGHT: 1.800                            OVERALL RMS: 0.018(m)
+
+REF FRAME: NAD_83(2011)(EPOCH:2010.0000)     IGS14 (EPOCH:2026.7612)
+
+         LAT:   39 44 12.55678      0.014(m)        39 44 12.57431      0.014(m)
+       E LON:  254 59 29.87655      0.016(m)       254 59 29.84012      0.016(m)
+       W LON:  105  0 30.12345      0.016(m)       105  0 30.15988      0.016(m)
+      EL HGT:        1650.750(m)   0.095(m)             1649.871(m)   0.095(m)
+
+UTM COORDINATES
+UTM (Zone 13)
+Northing (Y) [meters]       4401234.567
+Easting  (X) [meters]        500123.456

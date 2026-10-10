@@ -1,0 +1,16 @@
+     3.04           O                   M                   RINEX VERSION / TYPE
+survey-opus fixture generator                               PGM / RUN BY / DATE 
+MOON01                                                      MARKER NAME         
+SN1234567890        LEIAR25.R4                              ANT # / TYPE        
+  1130342.5012 -4835432.1234  3998123.4567                  APPROX POSITION XYZ 
+        2.0000        0.0000        0.0000                  ANTENNA: DELTA H/E/N
+G   8   C1C L1C D1C S1C C2W L2W D2W S2W                     SYS / # / OBS TYPES 
+R   8   C1C L1C D1C S1C C2P L2P D2P S2P                     SYS / # / OBS TYPES 
+E   8   C1X L1X D1X S1X C5X L5X D5X S5X                     SYS / # / OBS TYPES 
+    30.000                                                  INTERVAL            
+  2026    10     6     8     0    0.0000000     GPS         TIME OF FIRST OBS   
+  2026    10     6    11     0    0.0000000     UTC         TIME OF LAST OBS    
+    18                                                      LEAP SECONDS        
+      LEAP SECOND UPDATE INFO (RINEX 3 style)                    
+                                                            END OF HEADER       
+> 2026 10 06 08 00  0.0000000  0 18

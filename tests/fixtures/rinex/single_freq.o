@@ -1,0 +1,14 @@
+     2.11           O                   G                   RINEX VERSION / TYPE
+survey-opus fixture generator                               PGM / RUN BY / DATE 
+CHAR001                                                     MARKER NAME         
+                    TRM57971.00                             ANT # / TYPE        
+  1130342.5012 -4835432.1234  3998123.4567                  APPROX POSITION XYZ 
+        1.5423        0.0000        0.0000                  ANTENNA: DELTA H/E/N
+     4    C1    L1    D1    S1                              # / TYPES OF OBSERV 
+    15.000                                                  INTERVAL            
+  2026    10     8    12     0    0.0000000     GPS         TIME OF FIRST OBS   
+  2026    10     8    16    30    0.0000000     GPS         TIME OF LAST OBS    
+    18                                                      LEAP SECONDS        
+      LEAP SECOND UPDATE: not updated                                        
+                                                            END OF HEADER       
+> 2026 10 08 12 00  0.0000000  0  9G01G02G03G04G05G06G07G08G09
