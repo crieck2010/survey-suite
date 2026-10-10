@@ -48,7 +48,7 @@ threading the project CRS into Import via survey-field v0.2.0.
 ## Install (from source)
 
 ```bash
-pip install -r requirements.txt   # twelve engines, from public GitHub repos
+pip install -r requirements.txt   # thirteen engines, from public GitHub repos
 pip install -e .
 survey-suite                      # launch the desktop app
 ```
@@ -86,6 +86,7 @@ That's it — three steps, no command line needed after step 1.
 | `survey-drafting` | Drafting: plats/plans/maps to PDF, validity gate, metes-and-bounds |
 | `survey-basemap` | Drone basemap: GeoTIFF reader, overviews, CRS gate, drafting adapter |
 | `survey-crs` | CRS registry + transforms: 345 EPSG-researched entries (NAD83(2011) SPCS, WGS 84 UTM, geographic), stdlib TM/LCC/Hotine/UTM engine, datum accuracy metadata, picker API, CLI |
+| `survey-linework` | Field coding / linework: Emlid-convention code sets, description keys, figure builder (arcs, offsets, closure), figures interchange, drafting/cogo adapters |
 
 Each engine is pure Python, dependency-free, independently tested, and
 usable on its own. This repo adds the product layer:
@@ -101,7 +102,7 @@ usable on its own. This repo adds the product layer:
 
 **Where does the .exe come from?**
 From *your* machine. `build_exe.bat` runs PyInstaller locally and bundles
-the Python interpreter plus all twelve engines into one file. Nothing is
+the Python interpreter plus all thirteen engines into one file. Nothing is
 downloaded at runtime; the app works fully offline.
 
 **Do I need internet?**
