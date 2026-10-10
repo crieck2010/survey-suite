@@ -255,7 +255,8 @@ def _build_figures_tab(app, notebook, toolbox):  # noqa: C901 -- UI layout
         groups = {}
         for grp_id, label in (("closed", "Closed figures"),
                               ("open", "Open figures")):
-            groups[grp_id] = tree.insert("", "end", text=label, open=True)
+            groups[grp_id] = tree.insert("", "end", iid=f"grp:{grp_id}",
+                                         text=label, open=True)
         for rec in runners.figure_records(data):
             mark = "⚠ " if rec["n_flags"] else ("✔ " if rec["closed"]
                                                 else "")
@@ -326,7 +327,7 @@ def _build_figures_tab(app, notebook, toolbox):  # noqa: C901 -- UI layout
 
     def on_tree_select(_event=None):
         sel = tree.selection()
-        if not sel or sel[0] in ("closed", "open"):
+        if not sel or sel[0].startswith("grp:"):
             return
         state["selected"] = sel[0]
         _draw_canvas()
