@@ -48,6 +48,12 @@ class SurveyProject:
     style_path: str | None = None          # style.json
     basemap_path: str | None = None        # GeoTIFF orthomosaic
     basemap_overviews_built: bool = False
+    figures_path: str | None = None        # figures.json (survey-linework)
+    codeset_source: str = "preset:emlid"   # "preset:emlid"|"preset:civil3d"|path
+    keys_path: str | None = None           # description-keys JSON (None=builtin)
+    prefixes_path: str | None = None       # figure-prefixes JSON (None=builtin)
+    figures_strict: bool = True            # refuse flagged linework in Draft
+    figures_in_draft: bool = False         # include figures in the plat PDF
     surveyor_name: str = ""
     surveyor_license: str = ""
     surveyor_state: str = ""

@@ -12,12 +12,14 @@ from suite.toolboxes import (Toolbox, all_toolboxes, missing_engine_deps,
                              register_toolbox, toolbox_by_id)
 
 
-def test_seven_toolboxes_registered_in_notebook_order():
+def test_eight_toolboxes_registered_in_notebook_order():
     tbs = all_toolboxes()
     assert [t.id for t in tbs] == ["project", "import", "adjust", "map",
-                                  "draft", "basemap", "coordinates"]
+                                  "figures", "draft", "basemap",
+                                  "coordinates"]
     assert [t.title for t in tbs] == ["Project", "Import", "Adjust", "Map",
-                                     "Draft", "Basemap", "Coordinates"]
+                                     "Figures", "Draft", "Basemap",
+                                     "Coordinates"]
 
 
 def test_toolbox_spec_fields():
@@ -38,6 +40,7 @@ def test_engine_deps_declared():
     assert by_id["draft"].engine_deps == ("drafting",)
     assert by_id["basemap"].engine_deps == ("basemap",)
     assert by_id["coordinates"].engine_deps == ("crs",)
+    assert by_id["figures"].engine_deps == ("linework", "cogo", "field")
 
 
 def test_toolbox_by_id():

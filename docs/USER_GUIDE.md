@@ -1,4 +1,4 @@
-# SurveySuite User Guide — v0.3.0
+# SurveySuite User Guide — v0.4.0
 
 The desktop app walks the field-to-finish chain in order. Each tab below
 feeds the next; the Project tab's checklist shows where you stand.
@@ -97,6 +97,37 @@ a-posteriori variance factor, and blunder detection. Read it alongside
   the linework, on/off at will (the same toggle the plat uses at print
   time).
 - Boundary polyline draws once a parcel is defined on the Draft tab.
+
+## Figures tab (new in v0.4.0) — field-coded linework
+
+Civil 3D's field-to-finish, as a toolbox. Your Emlid codes
+(`EC1 *bl`, `EC1 *el`, `*cl` to close, `*bcr R=50` for curves) become
+drafted figures:
+
+1. **Code set picker** — `preset:emlid` (default; the `*bl`/`*el`
+   convention real Emlid crews use), `preset:civil3d`, or your own JSON
+   file. Invalid code sets fail loud, naming the exact problem.
+2. **Build figures from job** — runs survey-linework on the imported
+   `.sfield.json`; the figures save into the project manifest.
+3. **Figure tree** (left, Toolspace-style) — closed/open groups, ⚠ on
+   flagged figures; click to select, zoom, and read properties
+   (vertices, chorded length, closure/misclosure, area/perimeter on
+   closed figures, and provenance: which code set and job built it).
+4. **Map canvas** (right) — figures drawn as green linework, the
+   selected figure highlighted orange; arcs chorded at your sagitta
+   setting.
+5. **QA panel** (bottom) — every flag with a plain-language explanation
+   ("why this matters") and misclosure values; **Zoom to figure** jumps
+   the canvas to the problem shot.
+6. **Strict gate** — with strict mode on (default), flagged linework
+   *cannot* reach the plat: **Send to Draft** stages the figures, and
+   composing in the Draft tab refuses loudly, naming every flag.
+   Turn strict off only deliberately.
+
+*Field tip: shoot `*bl` when you start a feature and `*el` (or `*cl`
+to close back to the start) when you finish it. A `figure_never_ended`
+flag almost always means a missing end code — the fix is in the
+field notes, not the software.*
 
 ## Basemap tab
 

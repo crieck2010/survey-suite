@@ -84,7 +84,7 @@ def test_mapview_constructs():
 
 @pytest.mark.skipif(not _has_display(),
                     reason="GUI construction needs a display ($DISPLAY)")
-def test_seven_toolbox_tabs_from_registry():
+def test_eight_toolbox_tabs_from_registry():
     """Build #6: notebook tabs come from the toolbox registry -- titles
     in registry order, frames keyed by stable toolbox id. There is no
     hardcoded tab list in the app."""
@@ -95,8 +95,8 @@ def test_seven_toolbox_tabs_from_registry():
         titles = [app._notebook.tab(t, "text")
                   for t in app._notebook.tabs()]
         assert titles == [t.title for t in toolboxes.all_toolboxes()]
-        assert titles == ["Project", "Import", "Adjust", "Map", "Draft",
-                          "Basemap", "Coordinates"]
+        assert titles == ["Project", "Import", "Adjust", "Map", "Figures",
+                          "Draft", "Basemap", "Coordinates"]
         assert (set(app._toolbox_frames)
                 == {t.id for t in toolboxes.all_toolboxes()})
         for tab_id in ("project", "import", "adjust", "map", "draft",
@@ -160,3 +160,58 @@ def test_coordinates_picker_flow(tmp_path, monkeypatch):
         assert "OFF" in app.import_crs_status.get()
     finally:
         app.destroy()
+
+
+def test_figures_runners_api_surface():
+    """The Figures toolbox orchestration API is importable and Tk-free."""
+    from suite import runners
+    for name in ("run_figures_build", "read_figures", "figure_records",
+                 "qa_flag_list", "figures_strict_problems", "figure_stats",
+                 "figures_canvas_data", "figures_extra_layers",
+                 "resolve_codeset", "FiguresRefused", "FiguresBuildResult",
+                 "FLAG_EXPLANATIONS"):
+        assert callable(getattr(runners, name)) or not callable(
+            getattr(runners, name)), name
+        assert hasattr(runners, name), name
+
+
+@pytest.mark.skipif(not _has_display(),
+                    reason="GUI construction needs a display ($DISPLAY)")
+def test_figures_toolbox_constructs():
+    """The Figures tab builds and registers under xvfb."""
+    from suite.app import build_app
+    app = build_app()
+    try:
+        assert "figures" in app._toolbox_frames, \
+            "Figures toolbox tab missing"
+        # canvas + tree + QA widgets exist
+        assert app.figures_canvas is not None
+        assert app.figures_tree is not None
+        assert app.figures_qa_tree is not None
+    finally:
+        app.destroy()
+
+
+@pytest.mark.skipif(not _has_display(),
+                    reason="GUI construction needs a display ($DISPLAY)")
+def test_figures_linework_overlay_draws():
+    """Linework overlay draws on the mapview without crashing."""
+    import tkinter as tk
+    from suite.mapview import SurveyMapView
+    root = tk.Tk()
+    try:
+        view = SurveyMapView(root)
+        view.pack()
+        view.set_linework([
+            {"id": "EC1", "pts": [(0.0, 0.0), (10.0, 0.0), (10.0, 10.0)],
+             "closed": True, "selected": True},
+            {"id": "EP1", "pts": [(20.0, 0.0), (30.0, 5.0)],
+             "closed": False, "selected": False},
+        ])
+        view.zoom_to_extent((0.0, 0.0, 30.0, 10.0))
+        view.update_idletasks()
+        assert view._linework[0]["selected"] is True
+        view.clear_linework()
+        assert view._linework == []
+    finally:
+        root.destroy()

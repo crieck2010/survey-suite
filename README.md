@@ -12,11 +12,12 @@ least-squares adjustment with a written justification, draft plats/plans/maps
 to PDF over a toggleable drone-orthomosaic basemap — all offline, on your
 own machine.
 
-**v0.3.0 "coordinates"** is the final build of the current sequence:
-a registry-driven **toolbox** architecture (new toolboxes plug in
-without touching the app), the native **Coordinates** CRS-picker
-toolbox over the survey-crs registry, and **reproject-on-import**
-threading the project CRS into Import via survey-field v0.2.0.
+**v0.4.0 "figures"** adds the native **Figures** toolbox: field-coded
+linework from your Emlid shots — a Civil 3D Toolspace-style figure
+tree, linework drawn on the map canvas, a QA panel with plain-language
+flag explanations, and a strict gate before flagged linework may reach
+the plat. Under it: registry-driven **toolbox** architecture,
+**Coordinates** CRS-picker toolbox, and **reproject-on-import**.
 
 ## The 5-minute field-to-finish tour
 
@@ -34,6 +35,11 @@ threading the project CRS into Import via survey-field v0.2.0.
    Red **NOT VALID**? Read the report — it names the failed criterion.
 4. **Map tab** — zoom/pan your points (colored by FIX/FLOAT/SINGLE),
    toggle the drone basemap on/off, slide the opacity.
+   4b. **Figures tab** — build linework from your coded shots
+   (`EC1 *bl` ... `EC1 *el`): figure tree on the left (click to zoom),
+   linework on the canvas, QA panel at the bottom explaining every
+   flag in plain language. Strict mode refuses flagged linework from
+   the plat — no override.
 5. **Basemap tab** — load your DJI Terra / ODM GeoTIFF, check the
    GSD-vs-scale verdict, build overviews once, attach to the project.
 6. **Draft tab** — order your boundary points, pick sheet + scale,

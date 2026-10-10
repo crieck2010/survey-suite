@@ -47,7 +47,7 @@ Registry functions (`suite.toolboxes`):
 4. **Frames are keyed by stable id.** `app._toolbox_frames[id]` and
    `app.select_toolbox(id)` switch tabs programmatically.
 
-## The seven built-in toolboxes (v0.3.0)
+## The eight built-in toolboxes (v0.4.0)
 
 | id | Title | order | engine_deps |
 |---|---|---|---|
@@ -55,6 +55,7 @@ Registry functions (`suite.toolboxes`):
 | `import` | Import | 20 | `field` |
 | `adjust` | Adjust | 30 | `adjustflow` |
 | `map` | Map | 40 | `field`, `drafting`, `basemap` |
+| `figures` | Figures | 45 | `linework`, `cogo`, `field` |
 | `draft` | Draft | 50 | `drafting` |
 | `basemap` | Basemap | 60 | `basemap` |
 | `coordinates` | Coordinates | 70 | `crs` |

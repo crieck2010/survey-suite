@@ -360,15 +360,24 @@ def parcel_template(point_names: List[str], units: str = "ft") -> Dict[str, Any]
 def run_draft(sadj_path: str, parcel: Dict[str, Any],
               style: Optional[Dict[str, Any]], out_pdf: str,
               options: Optional[Dict[str, Any]] = None,
-              basemap_source: Any = None) -> Dict[str, Any]:
+              basemap_source: Any = None,
+              extra_layers: Optional[Dict[str, list]] = None
+              ) -> Dict[str, Any]:
     """Compose plat/plan/map PDF. Raises drafting.sadj.DraftRefused when
-    the adjustment is not VALID -- the gate is absolute, no override."""
+    the adjustment is not VALID -- the gate is absolute, no override.
+
+    ``extra_layers`` ({layer_name: [entity, ...]}) is merged into the
+    deliverable's layers -- the figures-to-plat path (see
+    :func:`figures_extra_layers`). Requires survey-drafting 0.1.3+.
+    """
     import tempfile
     from drafting import compose_deliverable, load_style
 
     opts = dict(options or {})
     if basemap_source is not None:
         opts["basemap"] = basemap_source
+    if extra_layers is not None:
+        opts["extra_layers"] = extra_layers
     with tempfile.TemporaryDirectory() as tmp:
         parcel_path = os.path.join(tmp, "parcel.json")
         with open(parcel_path, "w", encoding="utf-8") as fh:
@@ -476,3 +485,263 @@ def map_extent(points: List[Dict[str, Any]]) -> Optional[tuple]:
     if not es:
         return None
     return (min(es), min(ns), max(es), max(ns))
+
+
+# ---------------------------------------------------------------------------
+# figures runner (survey-linework)
+# ---------------------------------------------------------------------------
+
+class FiguresRefused(ValueError):
+    """Strict gate: flagged linework was refused from reaching drafting.
+
+    Raised by :func:`figures_extra_layers` when ``strict`` is true and the
+    figures carry any QA flags. There is no override -- fix the field
+    coding or turn strict mode off in the Figures toolbox.
+    """
+
+
+@dataclass
+class FiguresBuildResult:
+    figures_path: str
+    counts: Dict[str, Any]
+    flags: List[Dict[str, str]]      # figure/flag/detail
+    warnings: List[str]
+    codeset_name: str
+    ok: bool                        # built without a LineworkError
+
+
+#: Plain-language explanations for survey-linework QA flag codes, shown
+#: in the Figures toolbox QA panel (Civil 3D surfaces problems rather
+#: than hiding them).
+FLAG_EXPLANATIONS = {
+    "closure_exceeds_tolerance":
+        "The figure's closing misclosure is larger than the figure-prefix "
+        "database allows. Check for a bad shot, a mis-typed point name, "
+        "or a wrong curve radius in the field codes.",
+    "unclosed_expected_closed":
+        "This figure was expected to close (per its prefix entry) but was "
+        "left open -- the closing shot or *cl code may be missing.",
+    "figure_never_ended":
+        "The figure was still open when the job ended: no end code was "
+        "shot for it. It was emitted as an open figure so no shots are "
+        "lost.",
+    "offset_figure":
+        "Informational: this is a generated offset of another figure, "
+        "not field linework itself.",
+}
+
+
+def resolve_codeset(source: str):
+    """A ``LineworkCodeSet`` from ``"preset:emlid"``, ``"preset:civil3d"``,
+    or a JSON file path. Config problems raise ``ValueError`` naming the
+    exact issue (fail loud, like the engine)."""
+    from linework.codeset import (builtin_codeset, load_codeset)
+    from linework.errors import LineworkError
+    try:
+        if source == "preset:emlid":
+            return builtin_codeset("emlid")
+        if source == "preset:civil3d":
+            return builtin_codeset("civil3d")
+        if source.startswith("preset:"):
+            raise ValueError(
+                f"unknown code-set preset {source!r}; choose "
+                "'preset:emlid', 'preset:civil3d', or a JSON file path")
+        return load_codeset(source)
+    except LineworkError as exc:
+        raise ValueError(f"code set invalid: {exc}") from exc
+
+
+def _default_keys():
+    from linework.keys import DescriptionKeys, keys_template
+    return DescriptionKeys.from_dict(keys_template())
+
+
+def _default_prefixes():
+    from linework.prefixes import FigurePrefixDB, prefixes_template
+    return FigurePrefixDB.from_dict(prefixes_template())
+
+
+def _sha256_file(path: str) -> str:
+    import hashlib
+    h = hashlib.sha256()
+    with open(path, "rb") as fh:
+        for chunk in iter(lambda: fh.read(65536), b""):
+            h.update(chunk)
+    return h.hexdigest()
+
+
+def run_figures_build(job_path: str, codeset_source: str, out_path: str,
+                      keys_path: Optional[str] = None,
+                      prefixes_path: Optional[str] = None,
+                      offset_sagitta_m: float = 0.01) -> FiguresBuildResult:
+    """Build figures from a .sfield.json job; mirrors ``linework build``.
+
+    Writes the versioned figures JSON to ``out_path``. ``keys_path`` /
+    ``prefixes_path`` default to the documented built-in templates.
+    Engine problems raise ``ValueError`` with the engine's message.
+    """
+    from field.jobfile import read_job
+    from linework.errors import LineworkError
+    from linework.figures import build_figures
+    from linework.interchange import write_figures
+    from linework.keys import load_keys
+    from linework.prefixes import load_prefixes
+
+    codeset = resolve_codeset(codeset_source)
+    try:
+        keys = load_keys(keys_path) if keys_path else _default_keys()
+        prefixes = (load_prefixes(prefixes_path) if prefixes_path
+                    else _default_prefixes())
+    except LineworkError as exc:
+        raise ValueError(f"linework config invalid: {exc}") from exc
+    project = read_job(job_path)
+    try:
+        result = build_figures(
+            project, codeset, keys, prefixes,
+            job_sha256=_sha256_file(job_path),
+            offset_chord_sagitta_m=offset_sagitta_m)
+    except LineworkError as exc:
+        raise ValueError(f"figure build failed: {exc}") from exc
+    os.makedirs(os.path.dirname(os.path.abspath(out_path)), exist_ok=True)
+    write_figures(result, out_path)
+    return FiguresBuildResult(
+        figures_path=out_path, counts=result.counts(),
+        flags=[dict(f) for f in result.flags],
+        warnings=list(result.warnings),
+        codeset_name=codeset.name, ok=True)
+
+
+def read_figures(figures_path: str) -> Dict[str, Any]:
+    """Read a figures JSON file (rejects newer schemas loudly)."""
+    from linework.interchange import read_figures as _read
+    return _read(figures_path)
+
+
+def figure_records(figures_data: Dict[str, Any]) -> List[Dict[str, Any]]:
+    """One summary dict per figure for the figure tree.
+
+    Keys: id, base_code, prefix, layer, style, closed, close_method,
+    n_vertices, misclosure_m, n_flags, offset_of.
+    """
+    recs = []
+    for f in figures_data.get("figures", []):
+        flags = f.get("flags", [])
+        recs.append({
+            "id": f.get("id"), "base_code": f.get("base_code"),
+            "prefix": f.get("prefix"), "layer": f.get("layer"),
+            "style": f.get("style"), "closed": bool(f.get("closed")),
+            "close_method": f.get("close_method"),
+            "n_vertices": len(f.get("vertices", [])),
+            "misclosure_m": f.get("misclosure_m"),
+            "n_flags": len(flags),
+            "flag_codes": [fl.get("flag") for fl in flags],
+            "offset_of": f.get("offset_of"),
+        })
+    return recs
+
+
+def qa_flag_list(figures_data: Dict[str, Any]) -> List[Dict[str, str]]:
+    """Every QA flag with a plain-language explanation.
+
+    Keys: figure, flag, detail, explanation.
+    """
+    out = []
+    for fl in figures_data.get("report", {}).get("flags", []):
+        code = fl.get("flag", "")
+        out.append({
+            "figure": fl.get("figure", ""),
+            "flag": code,
+            "detail": fl.get("detail", ""),
+            "explanation": FLAG_EXPLANATIONS.get(
+                code, "See the survey-linework docs for this flag code."),
+        })
+    for w in figures_data.get("report", {}).get("warnings", []):
+        out.append({"figure": "", "flag": "warning", "detail": w,
+                    "explanation": "Build warning from survey-linework."})
+    return out
+
+
+def figures_strict_problems(figures_data: Dict[str, Any]) -> List[str]:
+    """Non-empty when the strict gate must refuse drafting.
+
+    Mirrors ``linework build --strict``: any QA flag is a refusal reason.
+    """
+    problems = []
+    for fl in qa_flag_list(figures_data):
+        if fl["flag"] == "warning":
+            continue
+        who = f"[{fl['figure']}] " if fl["figure"] else ""
+        problems.append(f"{who}{fl['flag']}: {fl['detail']}")
+    return problems
+
+
+def figure_stats(figures_data: Dict[str, Any], figure_id: str,
+                 chord_sagitta_m: float = 0.01) -> Dict[str, Any]:
+    """Vertex count, chorded length, closure, area/perimeter, provenance.
+
+    Area/perimeter come from survey-cogo on closed figures only.
+    """
+    from linework.interchange import figures_from_dict
+    figs = {f.id: f for f in figures_from_dict(figures_data)}
+    fig = figs.get(figure_id)
+    if fig is None:
+        raise ValueError(f"unknown figure {figure_id!r}")
+    import math
+    pts = fig.chorded_points(chord_sagitta_m)
+    length = sum(math.hypot(b[0] - a[0], b[1] - a[1])
+                 for a, b in zip(pts, pts[1:]))
+    stats: Dict[str, Any] = {
+        "id": fig.id, "layer": fig.layer, "style": fig.style,
+        "closed": fig.closed, "close_method": fig.close_method,
+        "n_vertices": len(fig.vertices), "n_chorded": len(pts),
+        "length_m": length, "misclosure_m": fig.misclosure_m,
+        "offset_of": fig.offset_of,
+        "area_m2": None, "perimeter_m": None,
+        "provenance": fig.provenance,
+    }
+    if fig.closed:
+        from linework.adapters import figures_to_cogo
+        from cogo.area import polygon_area, polygon_perimeter
+        cogo_pts = figures_to_cogo(figures_data,
+                                   chord_sagitta_m=chord_sagitta_m)[figure_id]
+        stats["area_m2"] = polygon_area(cogo_pts)
+        stats["perimeter_m"] = polygon_perimeter(cogo_pts)
+    return stats
+
+
+def figures_canvas_data(figures_data: Dict[str, Any],
+                        chord_sagitta_m: float = 0.01) -> List[Dict[str, Any]]:
+    """Chorded polylines for the map canvas.
+
+    Returns [{id, pts: [(x, y)...], closed}]; arcs are chorded within
+    ``chord_sagitta_m`` (there is no arc entity on the canvas).
+    """
+    from linework.interchange import figures_from_dict
+    out = []
+    for fig in figures_from_dict(figures_data):
+        pts = fig.chorded_points(chord_sagitta_m)
+        out.append({"id": fig.id,
+                    "pts": [(p[0], p[1]) for p in pts],
+                    "closed": fig.closed})
+    return out
+
+
+def figures_extra_layers(figures_path: str, strict: bool = True,
+                         chord_sagitta_m: float = 0.01,
+                         include_points: bool = True) -> Dict[str, list]:
+    """Drafting layer entities for a figures file.
+
+    Raises :class:`FiguresRefused` naming every QA flag when ``strict``
+    is true and the figures carry flags -- the gate before figures reach
+    the plat. Feed the result into ``run_draft(..., extra_layers=...)``.
+    """
+    from linework.adapters import figures_to_drafting_layers
+    data = read_figures(figures_path)
+    if strict:
+        problems = figures_strict_problems(data)
+        if problems:
+            raise FiguresRefused(
+                "strict mode: flagged linework refused from drafting:\n"
+                + "\n".join(f"  - {p}" for p in problems))
+    return figures_to_drafting_layers(data, chord_sagitta_m=chord_sagitta_m,
+                                      include_points=include_points)

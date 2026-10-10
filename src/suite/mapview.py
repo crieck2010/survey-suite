@@ -25,6 +25,10 @@ SOLUTION_COLORS = {
     "UNKNOWN": "#8a8a8a",  # gray
 }
 
+#: linework (figure) polyline colors on the canvas
+LINEWORK_COLOR = "#0e7c3a"      # dark green
+LINEWORK_SELECTED = "#e07b1a"   # orange highlight for the selected figure
+
 NO_DATA_TEXT = "import a job to begin"
 
 
@@ -89,6 +93,10 @@ class SurveyMapView(ttk.Frame):
         self._basemap_extent: tuple | None = None
         self._basemap_visible = False
 
+        # figure linework overlay: [{id, pts: [(x, y)...], closed,
+        # selected}] -- set via set_linework()
+        self._linework: list[dict] = []
+
         # view: canvas pixels per world unit + world center
         self._scale = 1.0
         self._cx = 0.0
@@ -134,6 +142,28 @@ class SurveyMapView(ttk.Frame):
 
     def show_basemap(self, visible: bool):
         self._basemap_visible = bool(visible)
+        self._redraw()
+
+    def set_linework(self, figures):
+        """Install the figure linework overlay.
+
+        ``figures``: list of dicts with ``id``, ``pts`` ([(x, y)...] in
+        world units), ``closed`` and optional ``selected`` keys. The
+        selected figure draws highlighted. Replaces any previous overlay.
+        """
+        self._linework = list(figures or [])
+        self._redraw()
+
+    def clear_linework(self):
+        self._linework = []
+        self._redraw()
+
+    def zoom_to_extent(self, extent):
+        """Fit the view to a world extent (xmin, ymin, xmax, ymax)."""
+        if not extent:
+            return
+        self._extent = tuple(extent)
+        self.fit()
         self._redraw()
 
     @staticmethod
@@ -258,6 +288,22 @@ class SurveyMapView(ttk.Frame):
                                     anchor="sw", font=("TkDefaultFont", 8),
                                     fill="#333333")
 
+    def _draw_linework(self):
+        for fig in self._linework:
+            pts = fig.get("pts") or []
+            if len(pts) < 2:
+                continue
+            coords = []
+            for x, y in pts:
+                coords.extend(self._world_to_canvas(x, y))
+            selected = bool(fig.get("selected"))
+            color = LINEWORK_SELECTED if selected else LINEWORK_COLOR
+            width = 3 if selected else 2
+            if fig.get("closed"):
+                coords.extend(coords[:2])  # close the ring visually
+            self.canvas.create_line(*coords, fill=color, width=width,
+                                    tags=("linework", f"fig:{fig.get('id')}"))
+
     def _draw_north_arrow(self):
         w, _h = self._canvas_size()
         x, y = w - 36, 40
@@ -298,6 +344,7 @@ class SurveyMapView(ttk.Frame):
             return
         self._draw_basemap()
         self._draw_boundary()
+        self._draw_linework()
         self._draw_points()
         self._draw_north_arrow()
         self._draw_scale_bar()

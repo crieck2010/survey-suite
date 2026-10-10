@@ -984,6 +984,17 @@ class SurveySuiteApp(tk.Tk):
                               parcel_names=self._parcel_point_order(),
                               units="m")
         self.map_status.set(f"{len(points)} point(s)")
+        # Figures toolbox overlay: staged linework on the plan-view map.
+        try:
+            if proj.artifact_exists("figures_path"):
+                fig_data = runners.read_figures(
+                    proj.resolve(proj.figures_path))
+                self.mapview.set_linework(
+                    runners.figures_canvas_data(fig_data))
+            else:
+                self.mapview.clear_linework()
+        except Exception:  # noqa: BLE001 -- linework is optional garnish
+            self.mapview.clear_linework()
         if self.map_basemap_var.get() and proj.artifact_exists("basemap_path"):
             self._render_basemap_async(proj)
         else:
@@ -1353,9 +1364,20 @@ class SurveySuiteApp(tk.Tk):
                     tif, project_crs=crs, opacity=opacity)
                 src.__enter__()
             try:
+                # Figures toolbox: staged linework merges onto the
+                # deliverable's layers (strict-gated; raises
+                # runners.FiguresRefused when strict and flags exist).
+                extra = None
+                proj = self.project
+                if (proj.figures_in_draft
+                        and proj.artifact_exists("figures_path")):
+                    extra = runners.figures_extra_layers(
+                        proj.resolve(proj.figures_path),
+                        strict=proj.figures_strict,
+                        chord_sagitta_m=0.01, include_points=True)
                 manifest = runners.run_draft(
                     sadj_path, parcel, style, out_pdf, options=options,
-                    basemap_source=src)
+                    basemap_source=src, extra_layers=extra)
             finally:
                 if src is not None:
                     src.__exit__(None, None, None)
@@ -1378,6 +1400,15 @@ class SurveySuiteApp(tk.Tk):
                           "DRAFT REFUSED -- the adjustment is NOT VALID. "
                           "There is no override.\n\nFailed criteria:\n"
                           + "\n".join(lines))
+                self.draft_out.tag_add("err", "1.0", "end")
+                self.draft_out.tag_config("err", foreground="#d23b3b")
+            elif isinstance(exc, runners.FiguresRefused):
+                _set_text(self.draft_out,
+                          "DRAFT REFUSED -- strict figures gate. Flagged "
+                          "linework may not reach the plat.\n\n"
+                          + str(exc)
+                          + "\n\nFix the field coding in the Figures "
+                            "toolbox, or turn strict mode off there.")
                 self.draft_out.tag_add("err", "1.0", "end")
                 self.draft_out.tag_config("err", foreground="#d23b3b")
             else:
